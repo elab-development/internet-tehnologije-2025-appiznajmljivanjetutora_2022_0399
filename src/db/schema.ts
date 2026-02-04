@@ -49,23 +49,31 @@ export const ucenik = mysqlTable("ucenik", {
   ukupanBrojCasova: int("ukupan_broj_casova").notNull().default(0),
 });
 
-export const tutor = mysqlTable("tutor", {
-  korisnikId: int("korisnik_id", { unsigned: true })
-    .primaryKey()
-    .references(() => korisnik.korisnikId, {
-      onDelete: "cascade",
-      onUpdate: "cascade",
-    }),
+export const tutor = mysqlTable(
+  "tutor",
+  {
+    korisnikId: int("korisnik_id", { unsigned: true })
+      .primaryKey()
+      .references(() => korisnik.korisnikId, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
 
-  biografija: text("biografija"),
-  cenaPoCasu: decimal("cena_po_casu", { precision: 10, scale: 2 })
-    .notNull()
-    .default("0.00"),
-  verifikovan: boolean("verifikovan").notNull().default(false),
-  prosecnaOcena: decimal("prosecna_ocena", { precision: 3, scale: 2 })
-    .notNull()
-    .default("0.00"),
-});
+    biografija: text("biografija"),
+    cenaPoCasu: decimal("cena_po_casu", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    verifikovan: boolean("verifikovan").notNull().default(false),
+    prosecnaOcena: decimal("prosecna_ocena", { precision: 3, scale: 2 })
+      .notNull()
+      .default("0.00"),
+  },
+  (t) => ({
+    idxCena: index("idx_tutor_cena").on(t.cenaPoCasu),
+    idxVerifikovan: index("idx_tutor_verifikovan").on(t.verifikovan),
+  })
+);
+
 
 export const administrator = mysqlTable("administrator", {
   korisnikId: int("korisnik_id", { unsigned: true })
