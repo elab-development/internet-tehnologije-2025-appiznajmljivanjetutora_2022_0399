@@ -8,7 +8,9 @@ export async function GET(req: Request) {
   const verified = searchParams.get("verified");
   const maxPrice = searchParams.get("maxPrice");
   const languageId = searchParams.get("languageId");
-  const level = searchParams.get("level"); // A1..C2
+  const levelParam = searchParams.get("level"); // A1..C2
+  const levels = new Set<Level>(["A1", "A2", "B1", "B2", "C1", "C2"]);
+  const level = levelParam && levels.has(levelParam as Level) ? (levelParam as Level) : null;
 
   // osnovni uslovi za tutor tabelu
   const tutorWhere = and(
@@ -42,7 +44,7 @@ export async function GET(req: Request) {
   // ako ima filtera za jezik/nivo, ukljucujemo tutor_jezik
   const tjWhere = and(
     languageId ? eq(schema.tutorJezik.jezikId, Number(languageId)) : undefined,
-    level ? eq(schema.tutorJezik.nivo, level as any) : undefined
+    level ? eq(schema.tutorJezik.nivo, level) : undefined
   );
 
   const tutors = await db
@@ -66,3 +68,5 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ tutors: unique }, { status: 200 });
 }
+
+type Level = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";

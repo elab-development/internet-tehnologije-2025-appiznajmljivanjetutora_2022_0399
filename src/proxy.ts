@@ -6,6 +6,8 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 const AUTH_COOKIE = "auth_token"; // mora da se poklapa sa AUTH_COOKIE u lib/auth.ts
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const PROTECTED_API_PREFIXES = ["/api/termini", "/api/rezervacije", "/api/recenzije"];
 
 function redirectToLogin(req: NextRequest) {
   const url = req.nextUrl.clone();
@@ -33,6 +35,7 @@ export async function proxy(req: NextRequest) {
   // javno dozvoljeno
   const isPublicPage = pathname === "/login" || pathname === "/register";
   const isAuthApi = pathname.startsWith("/api/auth/");
+  const isProtectedApi = PROTECTED_API_PREFIXES.some((p) => pathname.startsWith(p));
   const isPublicAsset =
     pathname.startsWith("/_next/") ||
     pathname === "/favicon.ico" ||
@@ -41,6 +44,21 @@ export async function proxy(req: NextRequest) {
 
   if (isPublicAsset || isAuthApi || isPublicPage) {
     return NextResponse.next();
+  }
+
+  // API: samo mutacije zahtevaju auth
+  if (isProtectedApi && !SAFE_METHODS.has(req.method)) {
+    const token = req.cookies.get(AUTH_COOKIE)?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
+    }
+
+    try {
+      await readRoleFromToken(token);
+      return NextResponse.next();
+    } catch {
+      return NextResponse.json({ error: "Nevalidan token." }, { status: 401 });
+    }
   }
 
   // sve ostalo je privatno

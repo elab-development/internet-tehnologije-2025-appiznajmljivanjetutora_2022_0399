@@ -45,9 +45,7 @@ async function main() {
     const adminId = Number(ins[0].insertId);
 
     //  ubaci i u tabelu administrator
-    if ((schema as any).administrator) {
-      await db.insert((schema as any).administrator).values({ korisnikId: adminId });
-    }
+    await db.insert(schema.administrator).values({ korisnikId: adminId });
 
     console.log("Ubacen admin (admin@test.com / Admin123!)");
   } else {
