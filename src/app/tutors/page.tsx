@@ -71,72 +71,136 @@ export default function TutorsPage() {
     })();
   }, [me, query]);
 
-  if (!me) return <main style={{ padding: 24 }}>Učitavam...</main>;
+  if (!me) {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">
+        <div className="pointer-events-none absolute -right-24 top-[-120px] h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
+        <div className="pointer-events-none absolute -left-20 bottom-[-140px] h-80 w-80 rounded-full bg-sky-300/40 blur-3xl" />
+        <div className="mx-auto max-w-5xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
+          <p className="text-slate-700">Učitavam...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1>Pretraga tutora</h1>
-
-      <div style={{ display: "grid", gap: 10, maxWidth: 420, marginTop: 16 }}>
-        <label>
-          Jezik:
-          <select value={languageId} onChange={(e) => setLanguageId(e.target.value)}>
-            <option value="">(svi)</option>
-            {languages.map((l) => (
-              <option key={l.jezikId} value={String(l.jezikId)}>
-                {l.naziv}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Nivo:
-          <select value={level} onChange={(e) => setLevel(e.target.value)}>
-            <option value="">(svi)</option>
-            {LEVELS.map((lv) => (
-              <option key={lv} value={lv}>{lv}</option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Max cena:
-          <input
-            placeholder="npr 1200"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-          />
-        </label>
-
-        <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <input
-            type="checkbox"
-            checked={verified}
-            onChange={(e) => setVerified(e.target.checked)}
-          />
-          Samo verifikovani
-        </label>
-
-        <a href="/me">Nazad na moj nalog</a>
-      </div>
-
-      <h2 style={{ marginTop: 24 }}>Rezultati</h2>
-      {tutors.length === 0 ? (
-        <p>Nema tutora za izabrane filtere.</p>
-      ) : (
-        <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-          {tutors.map((t) => (
-            <div key={t.tutorId} style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12 }}>
-              <b>{t.ime} {t.prezime}</b>{" "}
-              {t.verifikovan ? "✅" : "⏳"}
-              <div>Cena: {t.cenaPoCasu}</div>
-              <div>Ocena: {t.prosecnaOcena}</div>
-              {t.biografija && <div style={{ marginTop: 8 }}>{t.biografija}</div>}
+    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">
+      <div className="pointer-events-none absolute -right-24 top-[-120px] h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
+      <div className="pointer-events-none absolute -left-20 bottom-[-140px] h-80 w-80 rounded-full bg-sky-300/40 blur-3xl" />
+      <div className="mx-auto max-w-5xl">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+                Pretraga tutora
+              </h1>
+              <p className="mt-2 text-sm text-slate-600">
+                Filtriraj po jeziku, nivou i ceni kako bi brzo pronašao odgovarajućeg tutora.
+              </p>
             </div>
-          ))}
+            <a
+              className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
+              href="/me"
+            >
+              Nazad na moj nalog
+            </a>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Jezik
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+                value={languageId}
+                onChange={(e) => setLanguageId(e.target.value)}
+              >
+                <option value="">(svi)</option>
+                {languages.map((l) => (
+                  <option key={l.jezikId} value={String(l.jezikId)}>
+                    {l.naziv}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Nivo
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+                value={level}
+                onChange={(e) => setLevel(e.target.value)}
+              >
+                <option value="">(svi)</option>
+                {LEVELS.map((lv) => (
+                  <option key={lv} value={lv}>
+                    {lv}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Maks cena
+              <input
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+                placeholder="npr 1200"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              />
+            </label>
+
+            <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700">
+              <input
+                className="h-4 w-4 accent-blue-600"
+                type="checkbox"
+                checked={verified}
+                onChange={(e) => setVerified(e.target.checked)}
+              />
+              Samo verifikovani tutori
+            </label>
+          </div>
         </div>
-      )}
+
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold text-slate-900">Rezultati</h2>
+          {tutors.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-slate-600">
+              Nema tutora za izabrane filtere.
+            </div>
+          ) : (
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {tutors.map((t) => (
+                <div
+                  key={t.tutorId}
+                  className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <b className="text-base text-slate-900">
+                      {t.ime} {t.prezime}
+                    </b>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        t.verifikovan
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {t.verifikovan ? "Verifikovan" : "Na čekanju"}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-sm text-slate-700">
+                    <div>Cena: {t.cenaPoCasu}</div>
+                    <div>Ocena: {t.prosecnaOcena}</div>
+                  </div>
+                  {t.biografija && (
+                    <p className="mt-3 text-sm text-slate-600">{t.biografija}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
