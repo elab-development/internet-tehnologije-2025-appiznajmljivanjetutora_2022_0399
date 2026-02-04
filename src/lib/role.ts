@@ -1,4 +1,4 @@
-import { db, schema } from "@/src/db";
+import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 
 export async function getRoleForUser(korisnikId: number) {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db, schema } from "@/src/db";
+import { db, schema } from "@/db";
 import { and, eq, lte } from "drizzle-orm";
 
 export async function GET(req: Request) {

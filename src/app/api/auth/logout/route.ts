@@ -1,6 +1,6 @@
 // app/api/auth/logout/route.ts
 import { NextResponse } from "next/server";
-import { AUTH_COOKIE } from "@/src/lib/auth";
+import { AUTH_COOKIE } from "@/lib/auth";
 
 export async function POST() {
   const res = NextResponse.json({ ok: true });

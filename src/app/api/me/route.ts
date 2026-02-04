@@ -1,8 +1,8 @@
 // app/api/me/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { AUTH_COOKIE, verifyToken } from "@/src/lib/auth";
-import { db, schema } from "@/src/db";
+import { AUTH_COOKIE, verifyToken } from "@/lib/auth";
+import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 
 export async function GET() {

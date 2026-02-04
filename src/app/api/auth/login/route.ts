@@ -1,10 +1,10 @@
 // app/api/auth/login/route.ts
 import { NextResponse } from "next/server";
-import { db, schema } from "@/src/db";
+import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { signToken, AUTH_COOKIE } from "@/src/lib/auth";
-import { getRoleForUser } from "@/src/lib/role";
+import { signToken, AUTH_COOKIE } from "@/lib/auth";
+import { getRoleForUser } from "@/lib/role";
 
 type Body = { email: string; lozinka: string };
 
