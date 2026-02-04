@@ -27,7 +27,7 @@ async function readRoleFromToken(token: string) {
   return payload?.role as string | undefined;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // javno dozvoljeno
