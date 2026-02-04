@@ -1,0 +1,950 @@
+{
+  "version": "5",
+  "dialect": "mysql",
+  "id": "d98b1d3b-046c-4e31-afa3-0cacb0fedd77",
+  "prevId": "2cb0b535-8ad1-4ca0-8114-07f9f4264c73",
+  "tables": {
+    "administrator": {
+      "name": "administrator",
+      "columns": {
+        "korisnik_id": {
+          "name": "korisnik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "administrator_korisnik_id_korisnik_korisnik_id_fk": {
+          "name": "administrator_korisnik_id_korisnik_korisnik_id_fk",
+          "tableFrom": "administrator",
+          "tableTo": "korisnik",
+          "columnsFrom": [
+            "korisnik_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "administrator_korisnik_id": {
+          "name": "administrator_korisnik_id",
+          "columns": [
+            "korisnik_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "bedz": {
+      "name": "bedz",
+      "columns": {
+        "bedz_id": {
+          "name": "bedz_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "naziv": {
+          "name": "naziv",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "opis": {
+          "name": "opis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "bedz_bedz_id": {
+          "name": "bedz_bedz_id",
+          "columns": [
+            "bedz_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "favorit": {
+      "name": "favorit",
+      "columns": {
+        "ucenik_id": {
+          "name": "ucenik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tutor_id": {
+          "name": "tutor_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datum_dodavanja": {
+          "name": "datum_dodavanja",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ux_favorit_ucenik_tutor": {
+          "name": "ux_favorit_ucenik_tutor",
+          "columns": [
+            "ucenik_id",
+            "tutor_id"
+          ],
+          "isUnique": true
+        },
+        "idx_favorit_tutor": {
+          "name": "idx_favorit_tutor",
+          "columns": [
+            "tutor_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "favorit_ucenik_id_ucenik_korisnik_id_fk": {
+          "name": "favorit_ucenik_id_ucenik_korisnik_id_fk",
+          "tableFrom": "favorit",
+          "tableTo": "ucenik",
+          "columnsFrom": [
+            "ucenik_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "favorit_tutor_id_tutor_korisnik_id_fk": {
+          "name": "favorit_tutor_id_tutor_korisnik_id_fk",
+          "tableFrom": "favorit",
+          "tableTo": "tutor",
+          "columnsFrom": [
+            "tutor_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jezik": {
+      "name": "jezik",
+      "columns": {
+        "jezik_id": {
+          "name": "jezik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "naziv": {
+          "name": "naziv",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ux_jezik_naziv": {
+          "name": "ux_jezik_naziv",
+          "columns": [
+            "naziv"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "jezik_jezik_id": {
+          "name": "jezik_jezik_id",
+          "columns": [
+            "jezik_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "korisnik": {
+      "name": "korisnik",
+      "columns": {
+        "korisnik_id": {
+          "name": "korisnik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "ime": {
+          "name": "ime",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prezime": {
+          "name": "prezime",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(190)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lozinka": {
+          "name": "lozinka",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status_naloga": {
+          "name": "status_naloga",
+          "type": "enum('AKTIVAN','BLOKIRAN')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'AKTIVAN'"
+        }
+      },
+      "indexes": {
+        "ux_korisnik_email": {
+          "name": "ux_korisnik_email",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "korisnik_korisnik_id": {
+          "name": "korisnik_korisnik_id",
+          "columns": [
+            "korisnik_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "recenzija": {
+      "name": "recenzija",
+      "columns": {
+        "recenzija_id": {
+          "name": "recenzija_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "rezervacija_id": {
+          "name": "rezervacija_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ocena": {
+          "name": "ocena",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "komentar": {
+          "name": "komentar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ux_recenzija_rezervacija": {
+          "name": "ux_recenzija_rezervacija",
+          "columns": [
+            "rezervacija_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "recenzija_rezervacija_id_rezervacija_rezervacija_id_fk": {
+          "name": "recenzija_rezervacija_id_rezervacija_rezervacija_id_fk",
+          "tableFrom": "recenzija",
+          "tableTo": "rezervacija",
+          "columnsFrom": [
+            "rezervacija_id"
+          ],
+          "columnsTo": [
+            "rezervacija_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "recenzija_recenzija_id": {
+          "name": "recenzija_recenzija_id",
+          "columns": [
+            "recenzija_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "chk_recenzija_ocena": {
+          "name": "chk_recenzija_ocena",
+          "value": "`recenzija`.`ocena` BETWEEN 1 AND 5"
+        }
+      }
+    },
+    "rezervacija": {
+      "name": "rezervacija",
+      "columns": {
+        "rezervacija_id": {
+          "name": "rezervacija_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "termin_id": {
+          "name": "termin_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ucenik_id": {
+          "name": "ucenik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status_rezervacije": {
+          "name": "status_rezervacije",
+          "type": "enum('AKTIVNA','OTKAZANA','ODRZANA')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'AKTIVNA'"
+        }
+      },
+      "indexes": {
+        "ux_rezervacija_termin": {
+          "name": "ux_rezervacija_termin",
+          "columns": [
+            "termin_id"
+          ],
+          "isUnique": true
+        },
+        "idx_rezervacija_ucenik": {
+          "name": "idx_rezervacija_ucenik",
+          "columns": [
+            "ucenik_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "rezervacija_termin_id_termin_termin_id_fk": {
+          "name": "rezervacija_termin_id_termin_termin_id_fk",
+          "tableFrom": "rezervacija",
+          "tableTo": "termin",
+          "columnsFrom": [
+            "termin_id"
+          ],
+          "columnsTo": [
+            "termin_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "rezervacija_ucenik_id_ucenik_korisnik_id_fk": {
+          "name": "rezervacija_ucenik_id_ucenik_korisnik_id_fk",
+          "tableFrom": "rezervacija",
+          "tableTo": "ucenik",
+          "columnsFrom": [
+            "ucenik_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "rezervacija_rezervacija_id": {
+          "name": "rezervacija_rezervacija_id",
+          "columns": [
+            "rezervacija_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "termin": {
+      "name": "termin",
+      "columns": {
+        "termin_id": {
+          "name": "termin_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tutor_id": {
+          "name": "tutor_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datum": {
+          "name": "datum",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vreme_od": {
+          "name": "vreme_od",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vreme_do": {
+          "name": "vreme_do",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status_termina": {
+          "name": "status_termina",
+          "type": "enum('SLOBODAN','REZERVISAN','OTKAZAN')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'SLOBODAN'"
+        }
+      },
+      "indexes": {
+        "idx_termin_tutor_datum": {
+          "name": "idx_termin_tutor_datum",
+          "columns": [
+            "tutor_id",
+            "datum"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "termin_tutor_id_tutor_korisnik_id_fk": {
+          "name": "termin_tutor_id_tutor_korisnik_id_fk",
+          "tableFrom": "termin",
+          "tableTo": "tutor",
+          "columnsFrom": [
+            "tutor_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "termin_termin_id": {
+          "name": "termin_termin_id",
+          "columns": [
+            "termin_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "tutor": {
+      "name": "tutor",
+      "columns": {
+        "korisnik_id": {
+          "name": "korisnik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "biografija": {
+          "name": "biografija",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cena_po_casu": {
+          "name": "cena_po_casu",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'0.00'"
+        },
+        "verifikovan": {
+          "name": "verifikovan",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "prosecna_ocena": {
+          "name": "prosecna_ocena",
+          "type": "decimal(3,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'0.00'"
+        }
+      },
+      "indexes": {
+        "idx_tutor_cena": {
+          "name": "idx_tutor_cena",
+          "columns": [
+            "cena_po_casu"
+          ],
+          "isUnique": false
+        },
+        "idx_tutor_verifikovan": {
+          "name": "idx_tutor_verifikovan",
+          "columns": [
+            "verifikovan"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tutor_korisnik_id_korisnik_korisnik_id_fk": {
+          "name": "tutor_korisnik_id_korisnik_korisnik_id_fk",
+          "tableFrom": "tutor",
+          "tableTo": "korisnik",
+          "columnsFrom": [
+            "korisnik_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "tutor_korisnik_id": {
+          "name": "tutor_korisnik_id",
+          "columns": [
+            "korisnik_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "tutor_jezik": {
+      "name": "tutor_jezik",
+      "columns": {
+        "tutor_id": {
+          "name": "tutor_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "jezik_id": {
+          "name": "jezik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nivo": {
+          "name": "nivo",
+          "type": "enum('A1','A2','B1','B2','C1','C2')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ux_tutor_jezik": {
+          "name": "ux_tutor_jezik",
+          "columns": [
+            "tutor_id",
+            "jezik_id"
+          ],
+          "isUnique": true
+        },
+        "idx_tutor_jezik_tutor": {
+          "name": "idx_tutor_jezik_tutor",
+          "columns": [
+            "tutor_id"
+          ],
+          "isUnique": false
+        },
+        "idx_tutor_jezik_jezik": {
+          "name": "idx_tutor_jezik_jezik",
+          "columns": [
+            "jezik_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tutor_jezik_tutor_id_tutor_korisnik_id_fk": {
+          "name": "tutor_jezik_tutor_id_tutor_korisnik_id_fk",
+          "tableFrom": "tutor_jezik",
+          "tableTo": "tutor",
+          "columnsFrom": [
+            "tutor_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "tutor_jezik_jezik_id_jezik_jezik_id_fk": {
+          "name": "tutor_jezik_jezik_id_jezik_jezik_id_fk",
+          "tableFrom": "tutor_jezik",
+          "tableTo": "jezik",
+          "columnsFrom": [
+            "jezik_id"
+          ],
+          "columnsTo": [
+            "jezik_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ucenik": {
+      "name": "ucenik",
+      "columns": {
+        "korisnik_id": {
+          "name": "korisnik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ukupan_broj_casova": {
+          "name": "ukupan_broj_casova",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ucenik_korisnik_id_korisnik_korisnik_id_fk": {
+          "name": "ucenik_korisnik_id_korisnik_korisnik_id_fk",
+          "tableFrom": "ucenik",
+          "tableTo": "korisnik",
+          "columnsFrom": [
+            "korisnik_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ucenik_korisnik_id": {
+          "name": "ucenik_korisnik_id",
+          "columns": [
+            "korisnik_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ucenik_bedz": {
+      "name": "ucenik_bedz",
+      "columns": {
+        "ucenik_id": {
+          "name": "ucenik_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "bedz_id": {
+          "name": "bedz_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datum_dodele": {
+          "name": "datum_dodele",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ux_ucenik_bedz": {
+          "name": "ux_ucenik_bedz",
+          "columns": [
+            "ucenik_id",
+            "bedz_id"
+          ],
+          "isUnique": true
+        },
+        "idx_ucenik_bedz_bedz": {
+          "name": "idx_ucenik_bedz_bedz",
+          "columns": [
+            "bedz_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "ucenik_bedz_ucenik_id_ucenik_korisnik_id_fk": {
+          "name": "ucenik_bedz_ucenik_id_ucenik_korisnik_id_fk",
+          "tableFrom": "ucenik_bedz",
+          "tableTo": "ucenik",
+          "columnsFrom": [
+            "ucenik_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "ucenik_bedz_bedz_id_bedz_bedz_id_fk": {
+          "name": "ucenik_bedz_bedz_id_bedz_bedz_id_fk",
+          "tableFrom": "ucenik_bedz",
+          "tableTo": "bedz",
+          "columnsFrom": [
+            "bedz_id"
+          ],
+          "columnsTo": [
+            "bedz_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "zalba": {
+      "name": "zalba",
+      "columns": {
+        "zalba_id": {
+          "name": "zalba_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "opis": {
+          "name": "opis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "datum_podnosenja": {
+          "name": "datum_podnosenja",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status_zalbe": {
+          "name": "status_zalbe",
+          "type": "enum('NOVA','U_OBRADI','RESENA','ODBIJENA')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'NOVA'"
+        },
+        "podnosilac_id": {
+          "name": "podnosilac_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "obradivac_admin_id": {
+          "name": "obradivac_admin_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tutor_id": {
+          "name": "tutor_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recenzija_id": {
+          "name": "recenzija_id",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_zalba_podnosilac": {
+          "name": "idx_zalba_podnosilac",
+          "columns": [
+            "podnosilac_id"
+          ],
+          "isUnique": false
+        },
+        "idx_zalba_status": {
+          "name": "idx_zalba_status",
+          "columns": [
+            "status_zalbe"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "zalba_podnosilac_id_korisnik_korisnik_id_fk": {
+          "name": "zalba_podnosilac_id_korisnik_korisnik_id_fk",
+          "tableFrom": "zalba",
+          "tableTo": "korisnik",
+          "columnsFrom": [
+            "podnosilac_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "zalba_obradivac_admin_id_administrator_korisnik_id_fk": {
+          "name": "zalba_obradivac_admin_id_administrator_korisnik_id_fk",
+          "tableFrom": "zalba",
+          "tableTo": "administrator",
+          "columnsFrom": [
+            "obradivac_admin_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "zalba_tutor_id_tutor_korisnik_id_fk": {
+          "name": "zalba_tutor_id_tutor_korisnik_id_fk",
+          "tableFrom": "zalba",
+          "tableTo": "tutor",
+          "columnsFrom": [
+            "tutor_id"
+          ],
+          "columnsTo": [
+            "korisnik_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "zalba_recenzija_id_recenzija_recenzija_id_fk": {
+          "name": "zalba_recenzija_id_recenzija_recenzija_id_fk",
+          "tableFrom": "zalba",
+          "tableTo": "recenzija",
+          "columnsFrom": [
+            "recenzija_id"
+          ],
+          "columnsTo": [
+            "recenzija_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "zalba_zalba_id": {
+          "name": "zalba_zalba_id",
+          "columns": [
+            "zalba_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {
+        "chk_zalba_target_xor": {
+          "name": "chk_zalba_target_xor",
+          "value": "(\n        (`zalba`.`tutor_id` IS NULL AND `zalba`.`recenzija_id` IS NOT NULL)\n        OR\n        (`zalba`.`tutor_id` IS NOT NULL AND `zalba`.`recenzija_id` IS NULL)\n      )"
+        }
+      }
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

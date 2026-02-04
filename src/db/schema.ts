@@ -1,4 +1,4 @@
-// src/db/schema.ts
+import { sql } from "drizzle-orm";
 import {
   mysqlTable,
   int,
@@ -12,8 +12,8 @@ import {
   mysqlEnum,
   uniqueIndex,
   index,
+  check,
 } from "drizzle-orm/mysql-core";
-
 // --------------------
 // KORISNIK + PODTIPOVI
 // --------------------
@@ -212,7 +212,11 @@ export const recenzija = mysqlTable(
   },
   (t) => ({
     uxRez: uniqueIndex("ux_recenzija_rezervacija").on(t.rezervacijaId),
-  })
+    chkOcena: check(
+      "chk_recenzija_ocena",
+      sql`${t.ocena} BETWEEN 1 AND 5`
+    ),
+    })
 );
 
 // --------------------
@@ -315,5 +319,13 @@ export const zalba = mysqlTable(
   (t) => ({
     idxPodnosilac: index("idx_zalba_podnosilac").on(t.podnosilacId),
     idxStatus: index("idx_zalba_status").on(t.status),
-  })
+    chkZalbaTargetXor: check(
+      "chk_zalba_target_xor",
+      sql`(
+        (${t.tutorId} IS NULL AND ${t.recenzijaId} IS NOT NULL)
+        OR
+        (${t.tutorId} IS NOT NULL AND ${t.recenzijaId} IS NULL)
+      )`
+    ),
+    })
 );
