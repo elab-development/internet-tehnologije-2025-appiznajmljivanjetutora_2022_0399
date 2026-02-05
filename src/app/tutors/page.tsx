@@ -30,7 +30,8 @@ export default function TutorsPage() {
   const [languageId, setLanguageId] = useState<string>("");
   const [level, setLevel] = useState<string>("");
   const [verified, setVerified] = useState<boolean>(false);
-  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<number>(0);
+  const [maxPriceLimit, setMaxPriceLimit] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -57,7 +58,7 @@ export default function TutorsPage() {
   const query = useMemo(() => {
     const p = new URLSearchParams();
     if (verified) p.set("verified", "true");
-    if (maxPrice) p.set("maxPrice", maxPrice);
+    if (maxPrice > 0) p.set("maxPrice", String(maxPrice));
     if (languageId) p.set("languageId", languageId);
     if (level) p.set("level", level);
     return p.toString();
@@ -70,6 +71,11 @@ export default function TutorsPage() {
       const res = await fetch(`/api/tutors${query ? `?${query}` : ""}`);
       const data = await res.json();
       setTutors(data.tutors || []);
+      const limit = Number(data.maxPrice ?? 0);
+      setMaxPriceLimit(Number.isFinite(limit) ? limit : 0);
+      if (maxPrice > 0 && limit > 0 && maxPrice > limit) {
+        setMaxPrice(limit);
+      }
     })();
   }, [me, query]);
 
@@ -143,10 +149,19 @@ export default function TutorsPage() {
 
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               Maks cena
-              <Input
-                placeholder="npr 1200"
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>0</span>
+                <span>{maxPrice === 0 ? "Bez limita" : `${maxPrice} RSD`}</span>
+                <span>{maxPriceLimit || 0}</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={maxPriceLimit || 0}
+                step={100}
                 value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                className="w-full accent-blue-600"
               />
             </label>
 
@@ -173,6 +188,7 @@ export default function TutorsPage() {
               {tutors.map((t) => (
                 <TutorCard
                   key={t.tutorId}
+                  href={`/tutors/${t.tutorId}`}
                   ime={t.ime}
                   prezime={t.prezime}
                   cenaPoCasu={t.cenaPoCasu}

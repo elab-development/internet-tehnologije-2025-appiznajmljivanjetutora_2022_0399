@@ -11,9 +11,10 @@ type UpdateBody = Partial<{
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
@@ -33,19 +34,34 @@ export async function GET(
     .where(eq(schema.tutor.korisnikId, id));
 
   const tutor = rows[0] ?? null;
-  return NextResponse.json({ tutor }, { status: 200 });
+  if (!tutor) {
+    return NextResponse.json({ tutor: null, languages: [] }, { status: 200 });
+  }
+
+  const languages = await db
+    .select({
+      jezikId: schema.jezik.jezikId,
+      naziv: schema.jezik.naziv,
+      nivo: schema.tutorJezik.nivo,
+    })
+    .from(schema.tutorJezik)
+    .innerJoin(schema.jezik, eq(schema.jezik.jezikId, schema.tutorJezik.jezikId))
+    .where(eq(schema.tutorJezik.tutorId, id));
+
+  return NextResponse.json({ tutor, languages }, { status: 200 });
 }
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
@@ -75,14 +91,15 @@ export async function PUT(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
