@@ -217,6 +217,20 @@ export default function MePage() {
             <span className="font-medium text-slate-600">Status</span>
             <span className="text-slate-900">{user.statusNaloga}</span>
           </div>
+          {user.role === "TUTOR" && tutorProfile && (
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <span className="font-medium text-slate-600">Verifikacija</span>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  tutorProfile.verifikovan
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                {tutorProfile.verifikovan ? "Verifikovan" : "Na čekanju"}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -265,17 +279,6 @@ export default function MePage() {
             <Button onClick={saveTutorProfile} disabled={tutorSaving} variant="primary">
               {tutorSaving ? "Čuvam..." : "Sačuvaj izmene"}
             </Button>
-            {tutorProfile && (
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  tutorProfile.verifikovan
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {tutorProfile.verifikovan ? "Verifikovan" : "Na čekanju"}
-              </span>
-            )}
           </div>
 
           {tutorMsg && <p className="mt-3 text-sm text-slate-700">{tutorMsg}</p>}
