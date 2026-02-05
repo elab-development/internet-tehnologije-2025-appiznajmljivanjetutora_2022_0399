@@ -34,6 +34,7 @@ export async function proxy(req: NextRequest) {
 
   // javno dozvoljeno
   const isPublicPage = pathname === "/login" || pathname === "/register";
+  const isApi = pathname.startsWith("/api/");
   const isAuthApi = pathname.startsWith("/api/auth/");
   const isProtectedApi = PROTECTED_API_PREFIXES.some((p) => pathname.startsWith(p));
   const isPublicAsset =
@@ -59,6 +60,11 @@ export async function proxy(req: NextRequest) {
     } catch {
       return NextResponse.json({ error: "Nevalidan token." }, { status: 401 });
     }
+  }
+
+  // Ostale API rute (npr. /api/me) ostaju javne
+  if (isApi) {
+    return NextResponse.next();
   }
 
   // sve ostalo je privatno
