@@ -234,14 +234,6 @@ export default function MePage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {user.role === "UCENIK" && (
-            <a
-              className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
-              href="/tutors"
-            >
-              Pretraga tutora
-            </a>
-          )}
           <Button onClick={logout} variant="danger">
             Logout
           </Button>

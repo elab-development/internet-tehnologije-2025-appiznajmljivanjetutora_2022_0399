@@ -13,7 +13,7 @@ export default function Navbar() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/me");
+        const res = await fetch("/api/me", { cache: "no-store" });
         const data = await res.json();
         setUser(data?.user ?? null);
       } catch {
@@ -21,6 +21,18 @@ export default function Navbar() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        const data = await res.json();
+        setUser(data?.user ?? null);
+      } catch {
+        setUser(null);
+      }
+    })();
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/80 backdrop-blur">
@@ -57,14 +69,37 @@ export default function Navbar() {
                 Moje recenzije
               </Link>
             </>
-          ) : (
+          ) : user?.role === "ADMIN" ? (
             <>
               <Link
-                href="/tutors"
+                href="/complaints"
                 className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
               >
-                Tutori
+                Pregled žalbi
               </Link>
+              <Link
+                href="/verifications"
+                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              >
+                Pregled zahteva za verifikaciju
+              </Link>
+              <Link
+                href="/me"
+                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              >
+                Moj nalog
+              </Link>
+            </>
+          ) : (
+            <>
+              {user?.role !== "ADMIN" && (
+                <Link
+                  href="/tutors"
+                  className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+                >
+                  Pretraga tutora
+                </Link>
+              )}
               <Link
                 href="/me"
                 className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"

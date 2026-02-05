@@ -106,12 +106,7 @@ export default function TutorsPage() {
                 Filtriraj po jeziku, nivou i ceni kako bi brzo pronašao odgovarajućeg tutora.
               </p>
             </div>
-            <a
-              className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
-              href="/me"
-            >
-              Nazad na moj nalog
-            </a>
+            
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
