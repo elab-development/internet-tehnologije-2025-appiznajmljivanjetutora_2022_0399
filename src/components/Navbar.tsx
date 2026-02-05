@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type MeUser = { role: "UCENIK" | "TUTOR" | "ADMIN" };
 
 export default function Navbar() {
   const [user, setUser] = useState<MeUser | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     (async () => {
@@ -23,11 +25,17 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/80 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-lg font-semibold text-blue-900">
+        <Link
+          href="/"
+          className={`text-lg font-semibold text-blue-900 ${
+            pathname === "/login" || pathname === "/register" ? "mx-auto" : ""
+          }`}
+        >
           TutorApp
         </Link>
 
-        <nav className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-700">
+        {pathname !== "/login" && pathname !== "/register" && (
+          <nav className="flex flex-wrap items-center gap-3 text-sm font-medium text-slate-700">
           {user?.role === "TUTOR" ? (
             <>
               <Link
@@ -81,7 +89,8 @@ export default function Navbar() {
               )}
             </>
           )}
-        </nav>
+          </nav>
+        )}
       </div>
     </header>
   );
