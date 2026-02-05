@@ -7,7 +7,12 @@ import { jwtVerify } from "jose";
 
 const AUTH_COOKIE = "auth_token"; // mora da se poklapa sa AUTH_COOKIE u lib/auth.ts
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-const PROTECTED_API_PREFIXES = ["/api/termini", "/api/rezervacije", "/api/recenzije"];
+const PROTECTED_API_PREFIXES = [
+  "/api/termini",
+  "/api/rezervacije",
+  "/api/recenzije",
+  "/api/favoriti",
+];
 
 function redirectToLogin(req: NextRequest) {
   const url = req.nextUrl.clone();
