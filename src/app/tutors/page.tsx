@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Input from "@/components/Input";
+import TutorCard from "@/components/TutorCard";
 
 type User = { role: "UCENIK" | "TUTOR" | "ADMIN" };
 type Language = { jezikId: number; naziv: string };
@@ -141,8 +143,7 @@ export default function TutorsPage() {
 
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               Maks cena
-              <input
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+              <Input
                 placeholder="npr 1200"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
@@ -170,32 +171,15 @@ export default function TutorsPage() {
           ) : (
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {tutors.map((t) => (
-                <div
+                <TutorCard
                   key={t.tutorId}
-                  className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div className="flex items-center justify-between">
-                    <b className="text-base text-slate-900">
-                      {t.ime} {t.prezime}
-                    </b>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        t.verifikovan
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-amber-100 text-amber-800"
-                      }`}
-                    >
-                      {t.verifikovan ? "Verifikovan" : "Na čekanju"}
-                    </span>
-                  </div>
-                  <div className="mt-3 text-sm text-slate-700">
-                    <div>Cena: {t.cenaPoCasu}</div>
-                    <div>Ocena: {t.prosecnaOcena}</div>
-                  </div>
-                  {t.biografija && (
-                    <p className="mt-3 text-sm text-slate-600">{t.biografija}</p>
-                  )}
-                </div>
+                  ime={t.ime}
+                  prezime={t.prezime}
+                  cenaPoCasu={t.cenaPoCasu}
+                  verifikovan={t.verifikovan}
+                  prosecnaOcena={t.prosecnaOcena}
+                  biografija={t.biografija}
+                />
               ))}
             </div>
           )}

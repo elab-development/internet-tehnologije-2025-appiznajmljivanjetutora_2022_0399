@@ -2,6 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import Button from "@/components/Button";
+import Input from "@/components/Input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -56,8 +58,7 @@ export default function LoginPage() {
         <form onSubmit={onSubmit} className="mt-6 grid gap-4">
           <label className="grid gap-2 text-sm font-medium text-slate-700">
             Email
-            <input
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+            <Input
               placeholder="email@primer.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -65,21 +66,20 @@ export default function LoginPage() {
           </label>
           <label className="grid gap-2 text-sm font-medium text-slate-700">
             Lozinka
-            <input
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+            <Input
               placeholder="Unesi lozinku"
               type="password"
               value={lozinka}
               onChange={(e) => setLozinka(e.target.value)}
             />
           </label>
-          <button
+          <Button
             disabled={loading}
             type="submit"
-            className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+            variant="primary"
           >
             {loading ? "Ulazim..." : "Uloguj se"}
-          </button>
+          </Button>
         </form>
 
         {error && <p className="mt-4 text-sm text-rose-600">{error}</p>}

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
+import Input from "@/components/Input";
 
 type User = {
   korisnikId: number;
@@ -226,12 +228,9 @@ export default function MePage() {
               Pretraga tutora
             </a>
           )}
-          <button
-            onClick={logout}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
-          >
+          <Button onClick={logout} variant="danger">
             Logout
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -254,8 +253,7 @@ export default function MePage() {
             </label>
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               Cena po času
-              <input
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+              <Input
                 placeholder="npr 1200.00"
                 value={tutorPrice}
                 onChange={(e) => setTutorPrice(e.target.value)}
@@ -264,13 +262,9 @@ export default function MePage() {
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button
-              onClick={saveTutorProfile}
-              disabled={tutorSaving}
-              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            <Button onClick={saveTutorProfile} disabled={tutorSaving} variant="primary">
               {tutorSaving ? "Čuvam..." : "Sačuvaj izmene"}
-            </button>
+            </Button>
             {tutorProfile && (
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -296,19 +290,15 @@ export default function MePage() {
           </p>
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <input
-              className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+            <Input
+              className="flex-1"
               placeholder="Novi jezik (npr. Holandski)"
               value={newLanguage}
               onChange={(e) => setNewLanguage(e.target.value)}
             />
-            <button
-              onClick={addLanguage}
-              disabled={langSaving}
-              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
+            <Button onClick={addLanguage} disabled={langSaving} variant="primary">
               Dodaj
-            </button>
+            </Button>
           </div>
 
           {langMsg && <p className="mt-3 text-sm text-slate-700">{langMsg}</p>}
@@ -326,18 +316,20 @@ export default function MePage() {
                 >
                   {editLangId === lang.jezikId ? (
                     <>
-                      <input
-                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+                      <Input
+                        className="flex-1 rounded-lg text-sm"
                         value={editLangName}
                         onChange={(e) => setEditLangName(e.target.value)}
                       />
-                      <button
+                      <Button
                         onClick={() => updateLanguage(lang.jezikId)}
                         disabled={langSaving}
-                        className="rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-60"
+                        variant="primary"
+                        size="sm"
+                        className="rounded-lg"
                       >
                         Sačuvaj
-                      </button>
+                      </Button>
                       <button
                         onClick={() => {
                           setEditLangId(null);
@@ -362,13 +354,15 @@ export default function MePage() {
                       >
                         Izmeni
                       </button>
-                      <button
+                      <Button
                         onClick={() => deleteLanguage(lang.jezikId)}
                         disabled={langSaving}
-                        className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-60"
+                        variant="danger"
+                        size="sm"
+                        className="rounded-lg"
                       >
                         Obriši
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
