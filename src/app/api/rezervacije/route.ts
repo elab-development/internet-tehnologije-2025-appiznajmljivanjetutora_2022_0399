@@ -55,11 +55,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ucenik ID je obavezan." }, { status: 400 });
   }
 
+  const termin = await db.query.termin.findFirst({
+    where: eq(schema.termin.terminId, body.terminId),
+    columns: {
+      terminId: true,
+      status: true,
+    },
+  });
+  if (!termin) {
+    return NextResponse.json({ error: "Termin ne postoji." }, { status: 404 });
+  }
+  if (termin.status !== "SLOBODAN") {
+    return NextResponse.json({ error: "Termin nije slobodan." }, { status: 409 });
+  }
+
   await db.insert(schema.rezervacija).values({
     terminId: body.terminId,
     ucenikId,
     status: body.status ?? "AKTIVNA",
   });
+
+  await db
+    .update(schema.termin)
+    .set({ status: "REZERVISAN" })
+    .where(eq(schema.termin.terminId, body.terminId));
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }

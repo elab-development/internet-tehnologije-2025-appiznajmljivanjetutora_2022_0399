@@ -10,6 +10,31 @@ type UpdateBody = Partial<{
   status: "SLOBODAN" | "REZERVISAN" | "OTKAZAN";
 }>;
 
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
+  if (!id) {
+    return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
+  }
+
+  const termin = await db.query.termin.findFirst({
+    where: eq(schema.termin.terminId, id),
+    columns: {
+      terminId: true,
+      tutorId: true,
+      datum: true,
+      vremeOd: true,
+      vremeDo: true,
+      status: true,
+    },
+  });
+
+  return NextResponse.json({ termin: termin ?? null }, { status: 200 });
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

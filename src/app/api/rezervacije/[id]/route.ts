@@ -9,14 +9,15 @@ type UpdateBody = Partial<{
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
@@ -31,19 +32,33 @@ export async function PUT(
     .set(body)
     .where(eq(schema.rezervacija.rezervacijaId, id));
 
+  if (body.status === "OTKAZANA") {
+    const rez = await db.query.rezervacija.findFirst({
+      where: eq(schema.rezervacija.rezervacijaId, id),
+      columns: { terminId: true },
+    });
+    if (rez?.terminId) {
+      await db
+        .update(schema.termin)
+        .set({ status: "SLOBODAN" })
+        .where(eq(schema.termin.terminId, rez.terminId));
+    }
+  }
+
   return NextResponse.json({ ok: true }, { status: 200 });
 }
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
