@@ -155,6 +155,54 @@ async function main() {
     console.log("Ucenik vec postoji, preskacem");
   }
 
+  // 5) bedzevi + dodela bedzeva uceniku (primer)
+  const badges = [
+    { naziv: "Prvi čas", opis: "Završen prvi čas u sistemu." },
+    { naziv: "Pet zvezdica", opis: "Ostavljena recenzija sa 5." },
+    { naziv: "Redovan učenik", opis: "Održano 5+ časova." },
+    { naziv: "Lojalan", opis: "Više od 10 rezervacija." },
+  ];
+
+  const existingBadges = await db.query.bedz.findMany({
+    columns: { bedzId: true },
+  });
+
+  if (existingBadges.length === 0) {
+    await db.insert(schema.bedz).values(badges);
+    console.log("Ubaceni bedzevi");
+  } else {
+    console.log("Bedzevi vec postoje, preskacem");
+  }
+
+  const ucenikRow = await db.query.korisnik.findFirst({
+    where: (k, { eq }) => eq(k.email, studentEmail),
+    columns: { korisnikId: true },
+  });
+
+  if (ucenikRow) {
+    const allBadges = await db.query.bedz.findMany({
+      columns: { bedzId: true, naziv: true },
+    });
+
+    const today = new Date();
+    const badgeIds = allBadges.slice(0, 2).map((b) => b.bedzId);
+
+    if (badgeIds.length > 0) {
+      for (const bedzId of badgeIds) {
+        try {
+          await db.insert(schema.ucenikBedz).values({
+            ucenikId: ucenikRow.korisnikId,
+            bedzId,
+            datumDodele: today,
+          });
+        } catch {
+          // ignorisi duplikate
+        }
+      }
+      console.log("Dodeljeni bedzevi uceniku (primer)");
+    }
+  }
+
   console.log("Seed gotov!");
   process.exit(0);
 }
