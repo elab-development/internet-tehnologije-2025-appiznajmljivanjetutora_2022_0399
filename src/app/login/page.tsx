@@ -36,7 +36,11 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(next);
+      if (data?.role === "UCENIK") {
+        router.push("/tutors");
+      } else {
+        router.push(next);
+      }
       router.refresh();
     } finally {
       setLoading(false);

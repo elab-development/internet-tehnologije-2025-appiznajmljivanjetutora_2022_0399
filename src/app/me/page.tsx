@@ -25,6 +25,13 @@ type Language = {
   naziv: string;
 };
 
+type Bedz = {
+  bedzId: number;
+  naziv: string;
+  opis: string | null;
+  datumDodele: string;
+};
+
 export default function MePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -40,6 +47,8 @@ export default function MePage() {
   const [langSaving, setLangSaving] = useState(false);
   const [editLangId, setEditLangId] = useState<number | null>(null);
   const [editLangName, setEditLangName] = useState("");
+
+  const [bedzevi, setBedzevi] = useState<Bedz[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -69,6 +78,14 @@ export default function MePage() {
         const res = await fetch("/api/languages");
         const data = await res.json();
         setLanguages(data?.languages ?? []);
+      })();
+    }
+
+    if (user.role === "UCENIK") {
+      (async () => {
+        const res = await fetch("/api/me/bedzevi");
+        const data = await res.json();
+        setBedzevi(data?.bedzevi ?? []);
       })();
     }
   }, [user]);
@@ -193,51 +210,82 @@ export default function MePage() {
     <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">
       <div className="pointer-events-none absolute -right-24 top-[-120px] h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
       <div className="pointer-events-none absolute -left-20 bottom-[-140px] h-80 w-80 rounded-full bg-sky-300/40 blur-3xl" />
-      <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-              Moj nalog
-            </h1>
-            <p className="mt-2 text-slate-600">
-              {user.ime} {user.prezime}
-            </p>
-          </div>
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
-            {user.role}
-          </span>
-        </div>
-
-        <div className="mt-6 grid gap-2 text-sm text-slate-700">
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <span className="font-medium text-slate-600">Email</span>
-            <span className="text-slate-900">{user.email}</span>
-          </div>
-          <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-            <span className="font-medium text-slate-600">Status</span>
-            <span className="text-slate-900">{user.statusNaloga}</span>
-          </div>
-          {user.role === "TUTOR" && tutorProfile && (
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <span className="font-medium text-slate-600">Verifikacija</span>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  tutorProfile.verifikovan
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {tutorProfile.verifikovan ? "Verifikovan" : "Na čekanju"}
-              </span>
+      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+                Moj nalog
+              </h1>
+              <p className="mt-2 text-slate-600">
+                {user.ime} {user.prezime}
+              </p>
             </div>
-          )}
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+              {user.role}
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-2 text-sm text-slate-700">
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <span className="font-medium text-slate-600">Email</span>
+              <span className="text-slate-900">{user.email}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <span className="font-medium text-slate-600">Status</span>
+              <span className="text-slate-900">{user.statusNaloga}</span>
+            </div>
+            {user.role === "TUTOR" && tutorProfile && (
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <span className="font-medium text-slate-600">Verifikacija</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    tutorProfile.verifikovan
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {tutorProfile.verifikovan ? "Verifikovan" : "Na čekanju"}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={logout} variant="danger">
+              Logout
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={logout} variant="danger">
-            Logout
-          </Button>
-        </div>
+        {user.role === "UCENIK" && (
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
+            <h2 className="text-base font-semibold text-slate-900">Bedževi</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Bedževi koje ste osvojili u sistemu.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              {bedzevi.length === 0 ? (
+                <div className="w-full rounded-xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
+                  Još uvek nema bedževa.
+                </div>
+              ) : (
+                bedzevi.map((b) => (
+                  <div
+                    key={b.bedzId}
+                    className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-900"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-base text-blue-700 shadow-sm">
+                      🏅
+                    </span>
+                    <span>{b.naziv}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {user.role === "TUTOR" && (
