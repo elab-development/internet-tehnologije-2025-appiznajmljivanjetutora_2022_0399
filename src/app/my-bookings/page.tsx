@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
+import Link from "next/link";
 
 type MeUser = { korisnikId: number; role: "UCENIK" | "TUTOR" | "ADMIN" };
 type Termin = {
@@ -24,11 +25,15 @@ type Rezervacija = {
 type BookingRow = {
   rezervacijaId: number;
   terminId: number;
-  ucenikId: number;
+  ucenikId?: number;
   status: Rezervacija["status"];
   datum: string;
   vremeOd: string;
   vremeDo: string;
+  tutorId?: number;
+  tutorIme?: string;
+  tutorPrezime?: string;
+  cenaPoCasu?: string;
 };
 
 function formatDate(value: string) {
@@ -43,12 +48,18 @@ function formatTime(value: string) {
   return value.slice(0, 5);
 }
 
+function formatPrice(value?: string) {
+  if (!value) return "-";
+  return `${value} RSD`;
+}
+
 export default function MyBookingsPage() {
   const router = useRouter();
   const [me, setMe] = useState<MeUser | null>(null);
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -58,7 +69,7 @@ export default function MyBookingsPage() {
         router.replace("/login");
         return;
       }
-      if (data.user.role !== "TUTOR") {
+      if (data.user.role !== "TUTOR" && data.user.role !== "UCENIK") {
         router.replace("/me");
         return;
       }
@@ -88,34 +99,49 @@ export default function MyBookingsPage() {
       setLoading(true);
       setError(null);
       try {
-        const tRes = await fetch(`/api/termini?tutorId=${me.korisnikId}`);
-        const tData = await tRes.json();
-        const termini: Termin[] = tData?.termini ?? [];
+        if (me.role === "TUTOR") {
+          const tRes = await fetch(`/api/termini?tutorId=${me.korisnikId}`);
+          const tData = await tRes.json();
+          const termini: Termin[] = tData?.termini ?? [];
 
-        if (termini.length === 0) {
+          if (termini.length === 0) {
+            setRows([]);
+            setLoading(false);
+            return;
+          }
+
+          const reservations = await Promise.all(
+            termini.map(async (t) => {
+              const res = await fetch(`/api/rezervacije?terminId=${t.terminId}`);
+              const data = await res.json();
+              const list: Rezervacija[] = data?.rezervacije ?? [];
+              return list.map((r) => ({
+                rezervacijaId: r.rezervacijaId,
+                terminId: r.terminId,
+                ucenikId: r.ucenikId,
+                status: r.status,
+                datum: t.datum,
+                vremeOd: t.vremeOd,
+                vremeDo: t.vremeDo,
+                tutorId: t.tutorId,
+              }));
+            })
+          );
+
+          setRows(reservations.flat());
+          return;
+        }
+
+        const rRes = await fetch("/api/rezervacije/ucenik");
+        const rData = await rRes.json();
+        const rezervacije: BookingRow[] = rData?.rezervacije ?? [];
+
+        if (rezervacije.length === 0) {
           setRows([]);
           setLoading(false);
           return;
         }
-
-        const reservations = await Promise.all(
-          termini.map(async (t) => {
-            const res = await fetch(`/api/rezervacije?terminId=${t.terminId}`);
-            const data = await res.json();
-            const list: Rezervacija[] = data?.rezervacije ?? [];
-            return list.map((r) => ({
-              rezervacijaId: r.rezervacijaId,
-              terminId: r.terminId,
-              ucenikId: r.ucenikId,
-              status: r.status,
-              datum: t.datum,
-              vremeOd: t.vremeOd,
-              vremeDo: t.vremeDo,
-            }));
-          })
-        );
-
-        setRows(reservations.flat());
+        setRows(rezervacije);
       } catch {
         setError("Greška pri učitavanju rezervacija.");
       } finally {
@@ -132,7 +158,9 @@ export default function MyBookingsPage() {
       <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
         <h1 className="text-2xl font-semibold text-slate-900">Moje rezervacije</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Prikaz rezervacija koje se odnose na vaše termine.
+          {me?.role === "TUTOR"
+            ? "Prikaz rezervacija koje se odnose na vaše termine."
+            : "Prikaz rezervacija koje ste napravili kod tutora."}
         </p>
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
@@ -160,22 +188,47 @@ export default function MyBookingsPage() {
                     </span>
                   </div>
                   <div className="overflow-hidden rounded-xl border border-slate-200">
-                    <div className="grid grid-cols-[140px_1fr_120px] bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600">
+                    <div
+                      className={`grid ${
+                        me?.role === "UCENIK"
+                          ? "grid-cols-[140px_1fr_140px_120px]"
+                          : "grid-cols-[140px_1fr_120px]"
+                      } bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600`}
+                    >
                       <span>Vreme</span>
-                      <span>Učenik</span>
+                      <span>{me?.role === "TUTOR" ? "Učenik" : "Tutor"}</span>
+                      {me?.role === "UCENIK" && <span>Cena</span>}
                       <span className="text-right">Status</span>
                     </div>
                     {g.items.map((r, idx) => (
                       <div
                         key={r.rezervacijaId}
-                        className={`grid grid-cols-[140px_1fr_120px] items-center px-4 py-2 text-sm ${
+                        className={`grid ${
+                          me?.role === "UCENIK"
+                            ? "grid-cols-[140px_1fr_140px_120px]"
+                            : "grid-cols-[140px_1fr_120px]"
+                        } items-center px-4 py-2 text-sm ${
                           idx === g.items.length - 1 ? "" : "border-b border-slate-100"
                         }`}
                       >
                         <span className="font-medium text-slate-900">
                           {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
                         </span>
-                        <span className="text-slate-700">ID: {r.ucenikId}</span>
+                        {me?.role === "TUTOR" ? (
+                          <span className="text-slate-700">ID: {r.ucenikId}</span>
+                        ) : (
+                          <span className="text-slate-700">
+                            <Link
+                              className="font-semibold text-blue-700 hover:text-blue-800"
+                              href={`/tutors/${r.tutorId}`}
+                            >
+                              {r.tutorIme} {r.tutorPrezime}
+                            </Link>
+                          </span>
+                        )}
+                        {me?.role === "UCENIK" && (
+                          <span className="text-slate-700">{formatPrice(r.cenaPoCasu)}</span>
+                        )}
                         <span className="text-right">
                           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
                             {r.status}
@@ -184,6 +237,51 @@ export default function MyBookingsPage() {
                       </div>
                     ))}
                   </div>
+                  {me?.role === "UCENIK" && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {g.items.map((r) => (
+                        r.status !== "OTKAZANA" && (
+                          <Button
+                            key={`cancel-${r.rezervacijaId}`}
+                            variant="danger"
+                            size="sm"
+                            disabled={cancelingId === r.rezervacijaId}
+                            onClick={async () => {
+                              const ok = window.confirm(
+                                "Da li ste sigurni da želite da otkažete rezervaciju?"
+                              );
+                              if (!ok) return;
+                              setError(null);
+                              setCancelingId(r.rezervacijaId);
+                              try {
+                                const res = await fetch(`/api/rezervacije/${r.rezervacijaId}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ status: "OTKAZANA" }),
+                                });
+                                const data = await res.json();
+                                if (!res.ok) {
+                                  setError(data?.error || "Greška pri otkazivanju.");
+                                  return;
+                                }
+                                setRows((prev) =>
+                                  prev.map((x) =>
+                                    x.rezervacijaId === r.rezervacijaId
+                                      ? { ...x, status: "OTKAZANA" }
+                                      : x
+                                  )
+                                );
+                              } finally {
+                                setCancelingId(null);
+                              }
+                            }}
+                          >
+                            Otkaži
+                          </Button>
+                        )
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

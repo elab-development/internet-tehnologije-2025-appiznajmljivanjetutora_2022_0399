@@ -100,6 +100,14 @@ export default function Navbar() {
                   Pretraga tutora
                 </Link>
               )}
+              {user?.role === "UCENIK" && (
+                <Link
+                  href="/my-bookings"
+                  className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+                >
+                  Moje rezervacije
+                </Link>
+              )}
               <Link
                 href="/me"
                 className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/Button";
 
@@ -20,12 +20,37 @@ type Language = {
   nivo: string;
 };
 
+type Termin = {
+  terminId: number;
+  tutorId: number;
+  datum: string;
+  vremeOd: string;
+  vremeDo: string;
+  status: "SLOBODAN" | "REZERVISAN" | "OTKAZAN";
+};
+
+function formatDate(value: string) {
+  const raw = value?.split("T")[0] ?? "";
+  const [y, m, d] = raw.split("-");
+  if (!y || !m || !d) return value;
+  return `${d}.${m}.${y}`;
+}
+
+function formatTime(value: string) {
+  if (!value) return value;
+  return value.slice(0, 5);
+}
+
 export default function TutorDetailsPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [termini, setTermini] = useState<Termin[]>([]);
   const [loading, setLoading] = useState(true);
+  const [terminiLoading, setTerminiLoading] = useState(false);
+  const [terminiError, setTerminiError] = useState<string | null>(null);
+  const [terminiSuccess, setTerminiSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const id = params?.id;
@@ -40,6 +65,58 @@ export default function TutorDetailsPage() {
       setLoading(false);
     })();
   }, [params]);
+
+  useEffect(() => {
+    const id = params?.id;
+    if (!id) return;
+    (async () => {
+      setTerminiLoading(true);
+      setTerminiError(null);
+      try {
+        const res = await fetch(`/api/termini?tutorId=${id}`);
+        const data = await res.json();
+        const list: Termin[] = data?.termini ?? [];
+        setTermini(list.filter((t) => t.status === "SLOBODAN"));
+      } catch {
+        setTerminiError("Greška pri učitavanju termina.");
+      } finally {
+        setTerminiLoading(false);
+      }
+    })();
+  }, [params]);
+
+  const groupedTermini = useMemo(() => {
+    if (termini.length === 0) return [];
+    const map = new Map<string, Termin[]>();
+    for (const t of termini) {
+      const key = t.datum?.split("T")[0] ?? t.datum;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)?.push(t);
+    }
+    return Array.from(map.entries())
+      .map(([dateKey, items]) => ({
+        dateKey,
+        items: [...items].sort((a, b) => a.vremeOd.localeCompare(b.vremeOd)),
+      }))
+      .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  }, [termini]);
+
+  async function reserveTermin(terminId: number) {
+    setTerminiError(null);
+    setTerminiSuccess(null);
+    const res = await fetch("/api/rezervacije", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ terminId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setTerminiError(data?.error || "Greška pri rezervaciji.");
+      return;
+    }
+    setTermini((prev) => prev.filter((t) => t.terminId !== terminId));
+    setTerminiSuccess("Rezervacija uspešna.");
+  }
 
   if (loading) {
     return (
@@ -130,11 +207,50 @@ export default function TutorDetailsPage() {
           )}
         </div>
 
+        <div className="mt-8">
+          <h2 className="text-sm font-semibold text-slate-900">Slobodni termini</h2>
+          {terminiError && <p className="mt-2 text-sm text-red-600">{terminiError}</p>}
+          {terminiSuccess && <p className="mt-2 text-sm text-green-600">{terminiSuccess}</p>}
+          {terminiLoading ? (
+            <p className="mt-2 text-sm text-slate-600">Učitavam termine...</p>
+          ) : groupedTermini.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-600">Trenutno nema slobodnih termina.</p>
+          ) : (
+            <div className="mt-3 grid gap-4">
+              {groupedTermini.map((g) => (
+                <div
+                  key={g.dateKey}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                >
+                  <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-600">
+                    <span>{formatDate(g.dateKey)}</span>
+                    <span>{g.items.length} termina</span>
+                  </div>
+                  <div className="grid gap-2">
+                    {g.items.map((t) => (
+                      <div
+                        key={t.terminId}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm"
+                      >
+                        <span className="font-medium text-slate-900">
+                          {formatTime(t.vremeOd)} - {formatTime(t.vremeDo)}
+                        </span>
+                        <Button variant="primary" size="sm" onClick={() => reserveTermin(t.terminId)}>
+                          Rezerviši
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="mt-8 flex flex-wrap gap-3">
           <Button variant="secondary" onClick={() => router.push("/tutors")}>
             Nazad na pretragu
           </Button>
-          <Button variant="primary">Rezerviši termin</Button>
         </div>
       </div>
     </main>
