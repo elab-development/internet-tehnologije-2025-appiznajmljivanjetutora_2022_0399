@@ -210,7 +210,13 @@ export default function MePage() {
     <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">
       <div className="pointer-events-none absolute -right-24 top-[-120px] h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
       <div className="pointer-events-none absolute -left-20 bottom-[-140px] h-80 w-80 rounded-full bg-sky-300/40 blur-3xl" />
-      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[2fr_1fr]">
+      <div
+        className={
+          user.role === "UCENIK"
+            ? "mx-auto grid max-w-5xl gap-6 lg:grid-cols-[2fr_1fr]"
+            : "mx-auto max-w-2xl"
+        }
+      >
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>

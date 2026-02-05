@@ -12,7 +12,7 @@ type UpdateBody = Partial<{
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -22,7 +22,8 @@ export async function PUT(
     return NextResponse.json({ error: "Nemate pravo da menjate termin." }, { status: 403 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
@@ -39,7 +40,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -49,7 +50,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Nemate pravo da brisete termin." }, { status: 403 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
