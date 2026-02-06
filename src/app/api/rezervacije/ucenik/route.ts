@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
 export async function GET() {
@@ -11,6 +11,14 @@ export async function GET() {
   if (auth.role !== "UCENIK") {
     return NextResponse.json({ rezervacije: [] }, { status: 200 });
   }
+
+  await db.execute(sql`
+    UPDATE rezervacija r
+    JOIN termin t ON r.termin_id = t.termin_id
+    SET r.status_rezervacije = 'ODRZANA'
+    WHERE r.status_rezervacije = 'AKTIVNA'
+      AND TIMESTAMP(t.datum, t.vreme_do) < NOW()
+  `);
 
   const rows = await db
     .select({

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
 type CreateBody = {
@@ -10,6 +10,14 @@ type CreateBody = {
 };
 
 export async function GET(req: Request) {
+  await db.execute(sql`
+    UPDATE rezervacija r
+    JOIN termin t ON r.termin_id = t.termin_id
+    SET r.status_rezervacije = 'ODRZANA'
+    WHERE r.status_rezervacije = 'AKTIVNA'
+      AND TIMESTAMP(t.datum, t.vreme_do) < NOW()
+  `);
+
   const { searchParams } = new URL(req.url);
   const ucenikId = searchParams.get("ucenikId");
   const terminId = searchParams.get("terminId");
