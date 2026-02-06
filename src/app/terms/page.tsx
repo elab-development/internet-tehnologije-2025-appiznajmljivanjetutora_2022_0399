@@ -33,6 +33,14 @@ function formatTime(value: string) {
   return value.slice(0, 5);
 }
 
+function isFutureTerm(term: Termin) {
+  const datePart = term.datum?.split("T")[0] ?? term.datum;
+  if (!datePart || !term.vremeDo) return true;
+  const endDateTime = new Date(`${datePart}T${term.vremeDo}`);
+  if (Number.isNaN(endDateTime.getTime())) return true;
+  return endDateTime.getTime() > Date.now();
+}
+
 type GroupedTerms = {
   dateKey: string;
   terms: Termin[];
@@ -92,10 +100,12 @@ export default function TermsPage() {
     fetchTermini(me.korisnikId);
   }, [me, fetchTermini]);
 
+  const visibleTermini = useMemo(() => termini.filter(isFutureTerm), [termini]);
+
   const grouped = useMemo<GroupedTerms[]>(() => {
-    if (termini.length === 0) return [];
+    if (visibleTermini.length === 0) return [];
     const map = new Map<string, Termin[]>();
-    for (const t of termini) {
+    for (const t of visibleTermini) {
       const key = t.datum?.split("T")[0] ?? t.datum;
       if (!map.has(key)) map.set(key, []);
       map.get(key)?.push(t);

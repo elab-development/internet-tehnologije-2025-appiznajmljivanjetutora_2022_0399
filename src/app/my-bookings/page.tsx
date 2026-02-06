@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/components/Button";
 
 type MeUser = { korisnikId: number; role: "UCENIK" | "TUTOR" | "ADMIN" };
 type Termin = {
@@ -65,6 +66,12 @@ export default function MyBookingsPage() {
   const [tutorFilter, setTutorFilter] = useState<
     "AKTIVNA" | "OTKAZANA" | "ODRZANA" | "SVE"
   >("AKTIVNA");
+  const [reviewingId, setReviewingId] = useState<number | null>(null);
+  const [reviewRating, setReviewRating] = useState("5");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewMsg, setReviewMsg] = useState<string | null>(null);
+  const [reviewedIds, setReviewedIds] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     (async () => {
@@ -154,6 +161,18 @@ export default function MyBookingsPage() {
           return;
         }
         setRows(rezervacije);
+        try {
+          const revRes = await fetch(`/api/recenzije?ucenikId=${me.korisnikId}`);
+          const revData = await revRes.json();
+          const list: Array<{ rezervacijaId: number }> = revData?.recenzije ?? [];
+          const map: Record<number, boolean> = {};
+          list.forEach((r) => {
+            map[r.rezervacijaId] = true;
+          });
+          setReviewedIds(map);
+        } catch {
+          setReviewedIds({});
+        }
       } catch {
         setError("Greška pri učitavanju rezervacija.");
       } finally {
@@ -287,7 +306,7 @@ export default function MyBookingsPage() {
                   {me?.role === "UCENIK" && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {g.items.map((r) => (
-                        r.status !== "OTKAZANA" && (
+                        r.status === "AKTIVNA" && (
                           <Button
                             key={`cancel-${r.rezervacijaId}`}
                             variant="danger"
@@ -325,6 +344,120 @@ export default function MyBookingsPage() {
                           >
                             Otkaži
                           </Button>
+                        )
+                      ))}
+                    </div>
+                  )}
+                  {me?.role === "UCENIK" && (
+                    <div className="mt-4 grid gap-3">
+                      {g.items.map((r) => (
+                        r.status === "ODRZANA" && (
+                          <div key={`review-${r.rezervacijaId}`} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <span className="text-sm font-semibold text-slate-900">
+                                Recenzija za termin {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
+                              </span>
+                              {reviewedIds[r.rezervacijaId] ? (
+                                <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">
+                                  Recenzija poslata
+                                </span>
+                              ) : (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    setReviewMsg(null);
+                                    setReviewingId(r.rezervacijaId);
+                                    setReviewRating("5");
+                                    setReviewComment("");
+                                  }}
+                                >
+                                  Ostavi recenziju
+                                </Button>
+                              )}
+                            </div>
+
+                            {reviewingId === r.rezervacijaId && !reviewedIds[r.rezervacijaId] && (
+                              <div className="mt-3 grid gap-3">
+                                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                                  Ocena
+                                  <select
+                                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                                    value={reviewRating}
+                                    onChange={(e) => setReviewRating(e.target.value)}
+                                  >
+                                    <option value="5">5</option>
+                                    <option value="4">4</option>
+                                    <option value="3">3</option>
+                                    <option value="2">2</option>
+                                    <option value="1">1</option>
+                                  </select>
+                                </label>
+                                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                                  Komentar (opciono)
+                                  <textarea
+                                    className="min-h-[90px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+                                    placeholder="Napiši kratak komentar..."
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                  />
+                                </label>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    disabled={reviewSaving}
+                                    onClick={async () => {
+                                      setReviewMsg(null);
+                                      setReviewSaving(true);
+                                      try {
+                                        const res = await fetch("/api/recenzije", {
+                                          method: "POST",
+                                          headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({
+                                            rezervacijaId: r.rezervacijaId,
+                                            ocena: Number(reviewRating),
+                                            komentar: reviewComment.trim() || null,
+                                          }),
+                                        });
+                                        const data = await res.json();
+                                        if (!res.ok) {
+                                          setReviewMsg(data?.error || "Greška pri slanju recenzije.");
+                                          if (res.status === 409) {
+                                            setReviewedIds((prev) => ({
+                                              ...prev,
+                                              [r.rezervacijaId]: true,
+                                            }));
+                                          }
+                                          return;
+                                        }
+                                        setReviewedIds((prev) => ({
+                                          ...prev,
+                                          [r.rezervacijaId]: true,
+                                        }));
+                                        setReviewMsg("Recenzija je poslata.");
+                                        setReviewingId(null);
+                                      } finally {
+                                        setReviewSaving(false);
+                                      }
+                                    }}
+                                  >
+                                    {reviewSaving ? "Šaljem..." : "Pošalji"}
+                                  </Button>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setReviewingId(null)}
+                                  >
+                                    Odustani
+                                  </Button>
+                                </div>
+                                {reviewMsg && (
+                                  <p className="text-sm text-slate-700">{reviewMsg}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )
                       ))}
                     </div>

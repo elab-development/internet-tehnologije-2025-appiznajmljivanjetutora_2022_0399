@@ -99,7 +99,19 @@ export default function MePage() {
           const flat: Rezervacija[] = rez.flat();
           const activeReservations = flat.filter((r) => r.status === "AKTIVNA").length;
           const heldClasses = flat.filter((r) => r.status === "ODRZANA").length;
-          const avgRating = data?.tutor?.prosecnaOcena ?? "0.00";
+          let avgRating = data?.tutor?.prosecnaOcena ?? "0.00";
+          try {
+            const revRes = await fetch(`/api/recenzije?tutorId=${user.korisnikId}`);
+            const revData = await revRes.json();
+            const list: Array<{ ocena: number }> = revData?.recenzije ?? [];
+            if (list.length > 0) {
+              const avg =
+                list.reduce((sum, r) => sum + Number(r.ocena ?? 0), 0) / list.length;
+              avgRating = avg.toFixed(2);
+            }
+          } catch {
+            // fallback to stored avg
+          }
           setTutorStats({ activeReservations, heldClasses, avgRating });
         } catch {
           setTutorStats({ activeReservations: 0, heldClasses: 0, avgRating: "0.00" });

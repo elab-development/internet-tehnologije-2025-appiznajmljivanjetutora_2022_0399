@@ -29,6 +29,15 @@ type Termin = {
   status: "SLOBODAN" | "REZERVISAN" | "OTKAZAN";
 };
 
+type Review = {
+  recenzijaId: number;
+  rezervacijaId: number;
+  ocena: number;
+  komentar: string | null;
+  ucenikIme: string;
+  ucenikPrezime: string;
+};
+
 function formatDate(value: string) {
   const raw = value?.split("T")[0] ?? "";
   const [y, m, d] = raw.split("-");
@@ -41,6 +50,14 @@ function formatTime(value: string) {
   return value.slice(0, 5);
 }
 
+function isFutureTerm(term: Termin) {
+  const datePart = term.datum?.split("T")[0] ?? term.datum;
+  if (!datePart || !term.vremeDo) return true;
+  const endDateTime = new Date(`${datePart}T${term.vremeDo}`);
+  if (Number.isNaN(endDateTime.getTime())) return true;
+  return endDateTime.getTime() > Date.now();
+}
+
 export default function TutorDetailsPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -51,6 +68,7 @@ export default function TutorDetailsPage() {
   const [terminiLoading, setTerminiLoading] = useState(false);
   const [terminiError, setTerminiError] = useState<string | null>(null);
   const [terminiSuccess, setTerminiSuccess] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -66,6 +84,20 @@ export default function TutorDetailsPage() {
       setTutor(data?.tutor ?? null);
       setLanguages(data?.languages ?? []);
       setLoading(false);
+    })();
+  }, [params]);
+
+  useEffect(() => {
+    const id = params?.id;
+    if (!id) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/recenzije?tutorId=${id}`);
+        const data = await res.json();
+        setReviews(data?.recenzije ?? []);
+      } catch {
+        setReviews([]);
+      }
     })();
   }, [params]);
 
@@ -125,10 +157,12 @@ export default function TutorDetailsPage() {
     })();
   }, [params]);
 
+  const visibleTermini = useMemo(() => termini.filter(isFutureTerm), [termini]);
+
   const groupedTermini = useMemo(() => {
-    if (termini.length === 0) return [];
+    if (visibleTermini.length === 0) return [];
     const map = new Map<string, Termin[]>();
-    for (const t of termini) {
+    for (const t of visibleTermini) {
       const key = t.datum?.split("T")[0] ?? t.datum;
       if (!map.has(key)) map.set(key, []);
       map.get(key)?.push(t);
@@ -288,6 +322,36 @@ export default function TutorDetailsPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-sm font-semibold text-slate-900">Ocene i komentari</h2>
+          {reviews.length === 0 ? (
+            <p className="mt-2 text-sm text-slate-600">Još uvek nema recenzija.</p>
+          ) : (
+            <div className="mt-3 grid gap-3">
+              {reviews.map((r) => (
+                <div
+                  key={r.recenzijaId}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                >
+                  <div className="flex items-center justify-between text-sm font-semibold text-slate-900">
+                    <span>
+                      {r.ucenikIme} {r.ucenikPrezime}
+                    </span>
+                    <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">
+                      {r.ocena}/5
+                    </span>
+                  </div>
+                  {r.komentar ? (
+                    <p className="mt-2 text-sm text-slate-700">{r.komentar}</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-500">Bez komentara.</p>
+                  )}
                 </div>
               ))}
             </div>
