@@ -12,6 +12,7 @@ const PROTECTED_API_PREFIXES = [
   "/api/rezervacije",
   "/api/recenzije",
   "/api/favoriti",
+  "/api/verifikacije",
 ];
 
 function redirectToLogin(req: NextRequest) {
