@@ -60,6 +60,9 @@ export default function MyBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<number | null>(null);
+  const [studentFilter, setStudentFilter] = useState<
+    "AKTIVNA" | "OTKAZANA" | "ODRZANA" | "SVE"
+  >("AKTIVNA");
 
   useEffect(() => {
     (async () => {
@@ -79,8 +82,13 @@ export default function MyBookingsPage() {
 
   const grouped = useMemo(() => {
     if (rows.length === 0) return [];
+    const source =
+      me?.role === "UCENIK" && studentFilter !== "SVE"
+        ? rows.filter((r) => r.status === studentFilter)
+        : rows;
+    if (source.length === 0) return [];
     const map = new Map<string, BookingRow[]>();
-    for (const r of rows) {
+    for (const r of source) {
       const key = r.datum?.split("T")[0] ?? r.datum;
       if (!map.has(key)) map.set(key, []);
       map.get(key)?.push(r);
@@ -91,7 +99,7 @@ export default function MyBookingsPage() {
         items: [...items].sort((a, b) => a.vremeOd.localeCompare(b.vremeOd)),
       }))
       .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-  }, [rows]);
+  }, [rows, me?.role, studentFilter]);
 
   useEffect(() => {
     if (!me) return;
@@ -166,6 +174,23 @@ export default function MyBookingsPage() {
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
         <div className="mt-6">
+          {me?.role === "UCENIK" && (
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium text-slate-700">Filter:</span>
+              <select
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                value={studentFilter}
+                onChange={(e) =>
+                  setStudentFilter(e.target.value as typeof studentFilter)
+                }
+              >
+                <option value="AKTIVNA">Aktivne</option>
+                <option value="ODRZANA">Održane</option>
+                <option value="OTKAZANA">Otkazane</option>
+                <option value="SVE">Sve</option>
+              </select>
+            </div>
+          )}
           {loading ? (
             <p className="text-sm text-slate-600">Učitavam rezervacije...</p>
           ) : grouped.length === 0 ? (
