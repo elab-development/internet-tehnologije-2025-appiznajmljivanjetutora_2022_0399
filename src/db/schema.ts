@@ -85,6 +85,43 @@ export const administrator = mysqlTable("administrator", {
 });
 
 // --------------------
+// ZAHTEV ZA VERIFIKACIJU
+// --------------------
+export const zahtevVerifikacije = mysqlTable(
+  "zahtev_verifikacije",
+  {
+    zahtevId: int("zahtev_id", { unsigned: true })
+      .primaryKey()
+      .autoincrement(),
+
+    tutorId: int("tutor_id", { unsigned: true })
+      .notNull()
+      .references(() => tutor.korisnikId, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+
+    adminId: int("admin_id", { unsigned: true }).references(
+      () => administrator.korisnikId,
+      { onDelete: "set null", onUpdate: "cascade" }
+    ),
+
+    status: mysqlEnum("status_zahteva", ["NOV", "ODOBREN", "ODBIJEN"])
+      .notNull()
+      .default("NOV"),
+
+    datumPodnosenja: datetime("datum_podnosenja").notNull(),
+    datumOdluke: datetime("datum_odluke"),
+
+    dokumentUrl: varchar("dokument_url", { length: 255 }).notNull(),
+  },
+  (t) => ({
+    idxTutor: index("idx_zahtev_verif_tutor").on(t.tutorId),
+    idxStatus: index("idx_zahtev_verif_status").on(t.status),
+  })
+);
+
+// --------------------
 // JEZIK + TUTOR_JEZIK
 // --------------------
 export const jezik = mysqlTable(
