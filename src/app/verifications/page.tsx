@@ -32,7 +32,7 @@ export default function VerificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"SVE" | Verification["status"]>(
-    "SVE"
+    "NOV"
   );
   const [actingId, setActingId] = useState<number | null>(null);
 
@@ -170,7 +170,7 @@ export default function VerificationsPage() {
                     <Button
                       variant="primary"
                       size="sm"
-                      disabled={actingId === z.zahtevId || z.status === "ODOBREN"}
+                      disabled={actingId === z.zahtevId || z.status !== "NOV"}
                       onClick={() => updateStatus(z.zahtevId, "ODOBREN")}
                     >
                       Odobri
@@ -178,7 +178,7 @@ export default function VerificationsPage() {
                     <Button
                       variant="danger"
                       size="sm"
-                      disabled={actingId === z.zahtevId || z.status === "ODBIJEN"}
+                      disabled={actingId === z.zahtevId || z.status !== "NOV"}
                       onClick={() => updateStatus(z.zahtevId, "ODBIJEN")}
                     >
                       Odbij
