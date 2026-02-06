@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { db, schema } from "@/db";
+import { db } from "@/db";
+import { tutor, zahtevVerifikacije } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
@@ -31,24 +32,24 @@ export async function PUT(
   }
 
   await db
-    .update(schema.zahtevVerifikacije)
+    .update(zahtevVerifikacije)
     .set({
       status: body.status,
       adminId: auth.korisnikId,
       datumOdluke: new Date(),
     })
-    .where(eq(schema.zahtevVerifikacije.zahtevId, id));
+    .where(eq(zahtevVerifikacije.zahtevId, id));
 
   if (body.status === "ODOBREN") {
     const zahtev = await db.query.zahtevVerifikacije.findFirst({
-      where: eq(schema.zahtevVerifikacije.zahtevId, id),
+      where: eq(zahtevVerifikacije.zahtevId, id),
       columns: { tutorId: true },
     });
     if (zahtev?.tutorId) {
       await db
-        .update(schema.tutor)
+        .update(tutor)
         .set({ verifikovan: true })
-        .where(eq(schema.tutor.korisnikId, zahtev.tutorId));
+        .where(eq(tutor.korisnikId, zahtev.tutorId));
     }
   }
 

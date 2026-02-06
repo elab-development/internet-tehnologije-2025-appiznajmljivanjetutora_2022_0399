@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { db, schema } from "@/db";
+import { db } from "@/db";
+import { zahtevVerifikacije, korisnik } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
@@ -22,23 +23,23 @@ export async function GET(req: Request) {
   const statusFilter = status && allowed.has(status) ? status : null;
 
   const where = statusFilter
-    ? eq(schema.zahtevVerifikacije.status, statusFilter as "NOV" | "ODOBREN" | "ODBIJEN")
+    ? eq(zahtevVerifikacije.status, statusFilter as "NOV" | "ODOBREN" | "ODBIJEN")
     : undefined;
 
   const zahtevi = await db
     .select({
-      zahtevId: schema.zahtevVerifikacije.zahtevId,
-      tutorId: schema.zahtevVerifikacije.tutorId,
-      adminId: schema.zahtevVerifikacije.adminId,
-      status: schema.zahtevVerifikacije.status,
-      datumPodnosenja: schema.zahtevVerifikacije.datumPodnosenja,
-      datumOdluke: schema.zahtevVerifikacije.datumOdluke,
-      dokumentUrl: schema.zahtevVerifikacije.dokumentUrl,
-      tutorIme: schema.korisnik.ime,
-      tutorPrezime: schema.korisnik.prezime,
+      zahtevId: zahtevVerifikacije.zahtevId,
+      tutorId: zahtevVerifikacije.tutorId,
+      adminId: zahtevVerifikacije.adminId,
+      status: zahtevVerifikacije.status,
+      datumPodnosenja: zahtevVerifikacije.datumPodnosenja,
+      datumOdluke: zahtevVerifikacije.datumOdluke,
+      dokumentUrl: zahtevVerifikacije.dokumentUrl,
+      tutorIme: korisnik.ime,
+      tutorPrezime: korisnik.prezime,
     })
-    .from(schema.zahtevVerifikacije)
-    .innerJoin(schema.korisnik, eq(schema.korisnik.korisnikId, schema.zahtevVerifikacije.tutorId))
+    .from(zahtevVerifikacije)
+    .innerJoin(korisnik, eq(korisnik.korisnikId, zahtevVerifikacije.tutorId))
     .where(where);
 
   return NextResponse.json({ zahtevi }, { status: 200 });
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Dokument URL je obavezan." }, { status: 400 });
   }
 
-  await db.insert(schema.zahtevVerifikacije).values({
+  await db.insert(zahtevVerifikacije).values({
     tutorId: auth.korisnikId,
     status: "NOV",
     datumPodnosenja: new Date(),

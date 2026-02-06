@@ -10,14 +10,12 @@ export async function GET() {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
   if (auth.role !== "TUTOR") {
-    return NextResponse.json({ zahtev: null }, { status: 200 });
+    return NextResponse.json({ zahtevi: [] }, { status: 200 });
   }
 
-  const zahtev = await db
+  const zahtevi = await db
     .select({
       zahtevId: zahtevVerifikacije.zahtevId,
-      tutorId: zahtevVerifikacije.tutorId,
-      adminId: zahtevVerifikacije.adminId,
       status: zahtevVerifikacije.status,
       datumPodnosenja: zahtevVerifikacije.datumPodnosenja,
       datumOdluke: zahtevVerifikacije.datumOdluke,
@@ -25,8 +23,7 @@ export async function GET() {
     })
     .from(zahtevVerifikacije)
     .where(eq(zahtevVerifikacije.tutorId, auth.korisnikId))
-    .orderBy(desc(zahtevVerifikacije.datumPodnosenja))
-    .limit(1);
+    .orderBy(desc(zahtevVerifikacije.datumPodnosenja));
 
-  return NextResponse.json({ zahtev: zahtev[0] ?? null }, { status: 200 });
+  return NextResponse.json({ zahtevi }, { status: 200 });
 }
