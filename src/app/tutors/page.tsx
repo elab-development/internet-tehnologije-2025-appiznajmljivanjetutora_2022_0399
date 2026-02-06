@@ -26,6 +26,8 @@ export default function TutorsPage() {
   const [me, setMe] = useState<User | null>(null);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [tutors, setTutors] = useState<Tutor[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
 
   const [languageId, setLanguageId] = useState<string>("");
   const [level, setLevel] = useState<string>("");
@@ -55,6 +57,20 @@ export default function TutorsPage() {
     })();
   }, [router]);
 
+  useEffect(() => {
+    if (!me) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/favoriti");
+        const data = await res.json();
+        const list: Array<{ tutorId: number }> = data?.favoriti ?? [];
+        setFavoriteIds(new Set(list.map((f) => Number(f.tutorId))));
+      } catch {
+        setFavoriteIds(new Set());
+      }
+    })();
+  }, [me]);
+
   const query = useMemo(() => {
     const p = new URLSearchParams();
     if (verified) p.set("verified", "true");
@@ -78,6 +94,30 @@ export default function TutorsPage() {
       }
     })();
   }, [me, query]);
+
+  async function toggleFavorite(tutorId: number) {
+    setFavoriteError(null);
+    const isFavorite = favoriteIds.has(tutorId);
+    const res = await fetch("/api/favoriti", {
+      method: isFavorite ? "DELETE" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tutorId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setFavoriteError(data?.error || "Greška pri ažuriranju favorita.");
+      return;
+    }
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (isFavorite) {
+        next.delete(tutorId);
+      } else {
+        next.add(tutorId);
+      }
+      return next;
+    });
+  }
 
   if (!me) {
     return (
@@ -174,6 +214,7 @@ export default function TutorsPage() {
 
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-slate-900">Rezultati</h2>
+          {favoriteError && <p className="mt-2 text-sm text-red-600">{favoriteError}</p>}
           {tutors.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-slate-600">
               Nema tutora za izabrane filtere.
@@ -181,17 +222,19 @@ export default function TutorsPage() {
           ) : (
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {tutors.map((t) => (
-                <TutorCard
-                  key={t.tutorId}
-                  href={`/tutors/${t.tutorId}`}
-                  ime={t.ime}
-                  prezime={t.prezime}
-                  cenaPoCasu={t.cenaPoCasu}
-                  verifikovan={t.verifikovan}
-                  prosecnaOcena={t.prosecnaOcena}
-                  biografija={t.biografija}
-                />
-              ))}
+                  <TutorCard
+                    key={t.tutorId}
+                    href={`/tutors/${t.tutorId}`}
+                    ime={t.ime}
+                    prezime={t.prezime}
+                    cenaPoCasu={t.cenaPoCasu}
+                    verifikovan={t.verifikovan}
+                    prosecnaOcena={t.prosecnaOcena}
+                    biografija={t.biografija}
+                    isFavorite={favoriteIds.has(t.tutorId)}
+                    onToggleFavorite={() => toggleFavorite(t.tutorId)}
+                  />
+                ))}
             </div>
           )}
         </div>

@@ -108,6 +108,14 @@ export default function Navbar() {
                   Moje rezervacije
                 </Link>
               )}
+              {user?.role === "UCENIK" && (
+                <Link
+                  href="/favorites"
+                  className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+                >
+                  Moji favoriti
+                </Link>
+              )}
               <Link
                 href="/me"
                 className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"

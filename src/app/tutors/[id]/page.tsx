@@ -51,6 +51,9 @@ export default function TutorDetailsPage() {
   const [terminiLoading, setTerminiLoading] = useState(false);
   const [terminiError, setTerminiError] = useState<string | null>(null);
   const [terminiSuccess, setTerminiSuccess] = useState<string | null>(null);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [favoriteError, setFavoriteError] = useState<string | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const id = params?.id;
@@ -65,6 +68,43 @@ export default function TutorDetailsPage() {
       setLoading(false);
     })();
   }, [params]);
+
+  useEffect(() => {
+    const id = params?.id;
+    if (!id) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/favoriti");
+        const data = await res.json();
+        const list: Array<{ tutorId: number }> = data?.favoriti ?? [];
+        setIsFavorite(list.some((f) => String(f.tutorId) === String(id)));
+      } catch {
+        setIsFavorite(false);
+      }
+    })();
+  }, [params]);
+
+  async function toggleFavorite() {
+    const id = params?.id;
+    if (!id) return;
+    setFavoriteError(null);
+    setFavoriteLoading(true);
+    try {
+      const res = await fetch("/api/favoriti", {
+        method: isFavorite ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tutorId: Number(id) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFavoriteError(data?.error || "Greška pri ažuriranju favorita.");
+        return;
+      }
+      setIsFavorite((prev) => !prev);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  }
 
   useEffect(() => {
     const id = params?.id;
@@ -159,14 +199,20 @@ export default function TutorDetailsPage() {
       <div className="pointer-events-none absolute -right-24 top-[-120px] h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
       <div className="pointer-events-none absolute -left-20 bottom-[-140px] h-80 w-80 rounded-full bg-sky-300/40 blur-3xl" />
 
-      <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
+      <div className="relative mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
         <button
           type="button"
-          className="absolute right-6 top-6 flex h-9 w-9 items-center justify-center rounded-full border border-red-200 bg-white text-base font-semibold text-red-500 shadow-sm transition hover:bg-red-50"
-          aria-label="Dodaj u favorite"
-          title="Dodaj u favorite"
+          onClick={toggleFavorite}
+          disabled={favoriteLoading}
+          className={`absolute bottom-6 right-6 flex h-10 w-10 items-center justify-center rounded-full border shadow-sm transition ${
+            isFavorite
+              ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+              : "border-red-200 bg-white text-red-500 hover:bg-red-50"
+          }`}
+          aria-label={isFavorite ? "Ukloni iz favorita" : "Dodaj u favorite"}
+          title={isFavorite ? "Ukloni iz favorita" : "Dodaj u favorite"}
         >
-          ♡
+          {isFavorite ? "♥" : "♡"}
         </button>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -211,6 +257,7 @@ export default function TutorDetailsPage() {
           <h2 className="text-sm font-semibold text-slate-900">Slobodni termini</h2>
           {terminiError && <p className="mt-2 text-sm text-red-600">{terminiError}</p>}
           {terminiSuccess && <p className="mt-2 text-sm text-green-600">{terminiSuccess}</p>}
+          {favoriteError && <p className="mt-2 text-sm text-red-600">{favoriteError}</p>}
           {terminiLoading ? (
             <p className="mt-2 text-sm text-slate-600">Učitavam termine...</p>
           ) : groupedTermini.length === 0 ? (
@@ -256,3 +303,4 @@ export default function TutorDetailsPage() {
     </main>
   );
 }
+

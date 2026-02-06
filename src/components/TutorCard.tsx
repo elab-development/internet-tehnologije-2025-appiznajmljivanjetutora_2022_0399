@@ -8,6 +8,8 @@ type Props = {
   prosecnaOcena: string;
   biografija?: string | null;
   href?: string;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 };
 
 export default function TutorCard({
@@ -18,6 +20,8 @@ export default function TutorCard({
   prosecnaOcena,
   biografija,
   href,
+  isFavorite,
+  onToggleFavorite,
 }: Props) {
   const ocenaLabel =
     prosecnaOcena === "0.00" || prosecnaOcena === "0" || prosecnaOcena === "0.0"
@@ -50,14 +54,26 @@ export default function TutorCard({
     <div className="relative rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <button
         type="button"
-        className="absolute bottom-4 right-4 flex h-9 w-9 items-center justify-center rounded-full border border-red-200 bg-white text-base font-semibold text-red-500 shadow-sm transition hover:bg-red-50"
-        aria-label="Dodaj u favorite"
-        title="Dodaj u favorite"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onToggleFavorite?.();
+        }}
+        className={`absolute bottom-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-base font-semibold shadow-sm transition ${
+          isFavorite
+            ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+            : "border-red-200 bg-white text-red-500 hover:bg-red-50"
+        }`}
+        aria-label={isFavorite ? "Ukloni iz favorita" : "Dodaj u favorite"}
+        title={isFavorite ? "Ukloni iz favorita" : "Dodaj u favorite"}
       >
-        ♡
+        {isFavorite ? "♥" : "♡"}
       </button>
       {href ? (
-        <Link href={href} className="block focus:outline-none focus:ring-2 focus:ring-blue-200">
+        <Link
+          href={href}
+          className="relative z-0 block focus:outline-none focus:ring-2 focus:ring-blue-200"
+        >
           {content}
         </Link>
       ) : (

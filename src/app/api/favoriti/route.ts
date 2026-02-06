@@ -7,6 +7,10 @@ type CreateBody = {
   tutorId: number;
 };
 
+type DeleteBody = {
+  tutorId: number;
+};
+
 export async function GET() {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -60,4 +64,30 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });
+}
+
+export async function DELETE(req: Request) {
+  const auth = await getAuthPayload();
+  if (!auth) {
+    return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
+  }
+  if (auth.role !== "UCENIK") {
+    return NextResponse.json({ error: "Nemate pravo da uklonite favorite." }, { status: 403 });
+  }
+
+  const body = (await req.json()) as DeleteBody;
+  if (!body?.tutorId) {
+    return NextResponse.json({ error: "Tutor ID je obavezan." }, { status: 400 });
+  }
+
+  await db
+    .delete(schema.favorit)
+    .where(
+      and(
+        eq(schema.favorit.ucenikId, auth.korisnikId),
+        eq(schema.favorit.tutorId, body.tutorId)
+      )
+    );
+
+  return NextResponse.json({ ok: true }, { status: 200 });
 }
