@@ -155,6 +155,90 @@ async function main() {
     console.log("Ucenik vec postoji, preskacem");
   }
 
+  // 4b) par odrzanih rezervacija (za test recenzija)
+  const tutorRow = await db.query.korisnik.findFirst({
+    where: (k, { eq }) => eq(k.email, "mila.tutor@test.com"),
+    columns: { korisnikId: true },
+  });
+
+  const ucenikRow2 = await db.query.korisnik.findFirst({
+    where: (k, { eq }) => eq(k.email, studentEmail),
+    columns: { korisnikId: true },
+  });
+
+  if (tutorRow && ucenikRow2) {
+    const today = new Date();
+    const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 2);
+    const d2 = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+
+    await db.insert(schema.termin).values([
+      {
+        tutorId: tutorRow.korisnikId,
+        datum: d1,
+        vremeOd: "10:00:00",
+        vremeDo: "11:00:00",
+        status: "REZERVISAN",
+      },
+      {
+        tutorId: tutorRow.korisnikId,
+        datum: d2,
+        vremeOd: "12:00:00",
+        vremeDo: "13:00:00",
+        status: "REZERVISAN",
+      },
+    ]);
+
+    const t1 = await db.query.termin.findFirst({
+      where: (t, { and, eq }) =>
+        and(
+          eq(t.tutorId, tutorRow.korisnikId),
+          eq(t.datum, d1),
+          eq(t.vremeOd, "10:00:00"),
+          eq(t.vremeDo, "11:00:00")
+        ),
+      columns: { terminId: true },
+    });
+    const t2 = await db.query.termin.findFirst({
+      where: (t, { and, eq }) =>
+        and(
+          eq(t.tutorId, tutorRow.korisnikId),
+          eq(t.datum, d2),
+          eq(t.vremeOd, "12:00:00"),
+          eq(t.vremeDo, "13:00:00")
+        ),
+      columns: { terminId: true },
+    });
+
+    const terminId1 = t1?.terminId;
+    const terminId2 = t2?.terminId;
+
+    if (terminId1 && terminId2) {
+      const existing = await db.query.rezervacija.findMany({
+        where: (r, { inArray }) => inArray(r.terminId, [terminId1, terminId2]),
+        columns: { terminId: true },
+      });
+      const existingIds = new Set(existing.map((e) => e.terminId));
+      const toInsert = [
+        {
+          terminId: terminId1,
+          ucenikId: ucenikRow2.korisnikId,
+          status: "ODRZANA" as const,
+        },
+        {
+          terminId: terminId2,
+          ucenikId: ucenikRow2.korisnikId,
+          status: "ODRZANA" as const,
+        },
+      ].filter((r) => !existingIds.has(r.terminId));
+
+      if (toInsert.length > 0) {
+        await db.insert(schema.rezervacija).values(toInsert);
+      }
+    }
+
+    console.log("Ubacene odrzane rezervacije (primer)");
+  }
+
   // 5) bedzevi + dodela bedzeva uceniku (primer)
   const badges = [
     { naziv: "Prvi čas", opis: "Završen prvi čas u sistemu." },
