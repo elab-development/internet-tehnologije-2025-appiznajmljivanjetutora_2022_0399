@@ -31,6 +31,20 @@ export async function PUT(
     return NextResponse.json({ error: "Status nije ispravan." }, { status: 400 });
   }
 
+  const existing = await db.query.zahtevVerifikacije.findFirst({
+    where: eq(zahtevVerifikacije.zahtevId, id),
+    columns: { status: true, tutorId: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "Zahtev nije pronađen." }, { status: 404 });
+  }
+  if (existing.status !== "NOV") {
+    return NextResponse.json(
+      { error: "Zahtev je već obrađen." },
+      { status: 409 }
+    );
+  }
+
   await db
     .update(zahtevVerifikacije)
     .set({
@@ -41,15 +55,11 @@ export async function PUT(
     .where(eq(zahtevVerifikacije.zahtevId, id));
 
   if (body.status === "ODOBREN") {
-    const zahtev = await db.query.zahtevVerifikacije.findFirst({
-      where: eq(zahtevVerifikacije.zahtevId, id),
-      columns: { tutorId: true },
-    });
-    if (zahtev?.tutorId) {
+    if (existing.tutorId) {
       await db
         .update(tutor)
         .set({ verifikovan: true })
-        .where(eq(tutor.korisnikId, zahtev.tutorId));
+        .where(eq(tutor.korisnikId, existing.tutorId));
     }
   }
 

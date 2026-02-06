@@ -55,30 +55,42 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Ucenik ID je obavezan." }, { status: 400 });
   }
 
-  const termin = await db.query.termin.findFirst({
-    where: eq(schema.termin.terminId, body.terminId),
-    columns: {
-      terminId: true,
-      status: true,
-    },
-  });
-  if (!termin) {
-    return NextResponse.json({ error: "Termin ne postoji." }, { status: 404 });
-  }
-  if (termin.status !== "SLOBODAN") {
-    return NextResponse.json({ error: "Termin nije slobodan." }, { status: 409 });
-  }
+  try {
+    await db.transaction(async (tx) => {
+      const termin = await tx
+        .select({
+          terminId: schema.termin.terminId,
+          status: schema.termin.status,
+        })
+        .from(schema.termin)
+        .where(eq(schema.termin.terminId, body.terminId))
+        .for("update");
 
-  await db.insert(schema.rezervacija).values({
-    terminId: body.terminId,
-    ucenikId,
-    status: body.status ?? "AKTIVNA",
-  });
+      if (termin.length === 0) {
+        throw { status: 404, message: "Termin ne postoji." };
+      }
+      if (termin[0].status !== "SLOBODAN") {
+        throw { status: 409, message: "Termin nije slobodan." };
+      }
 
-  await db
-    .update(schema.termin)
-    .set({ status: "REZERVISAN" })
-    .where(eq(schema.termin.terminId, body.terminId));
+      await tx.insert(schema.rezervacija).values({
+        terminId: body.terminId,
+        ucenikId,
+        status: body.status ?? "AKTIVNA",
+      });
+
+      await tx
+        .update(schema.termin)
+        .set({ status: "REZERVISAN" })
+        .where(eq(schema.termin.terminId, body.terminId));
+    });
+  } catch (err: unknown) {
+    if (err && typeof err === "object" && "status" in err && "message" in err) {
+      const e = err as { status: number; message: string };
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    throw err;
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }
