@@ -120,6 +120,57 @@ export default function MePage() {
     }
   }
 
+  async function uploadVerificationFile() {
+    setVerifMsg(null);
+    if (!verifFile) {
+      setVerifMsg("Izaberite dokument ili sliku.");
+      return;
+    }
+    setVerifUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", verifFile);
+      const res = await fetch("/api/verifikacije/upload", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setVerifMsg(data?.error || "Greška pri uploadu.");
+        return;
+      }
+      setVerifDocUrl(data.url);
+      setVerifMsg("Dokument uspešno uploadovan.");
+    } finally {
+      setVerifUploading(false);
+    }
+  }
+
+  async function submitVerification() {
+    setVerifMsg(null);
+    if (!verifDocUrl) {
+      setVerifMsg("Dokument URL je obavezan.");
+      return;
+    }
+    setVerifSubmitting(true);
+    try {
+      const res = await fetch("/api/verifikacije", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dokumentUrl: verifDocUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setVerifMsg(data?.error || "Greška pri slanju zahteva.");
+        return;
+      }
+      setVerifStatus("NOV");
+      setVerifMsg("Zahtev je poslat.");
+    } finally {
+      setVerifSubmitting(false);
+    }
+  }
+
   async function addLanguage() {
     setLangMsg(null);
     if (!newLanguage.trim()) {
@@ -330,6 +381,7 @@ export default function MePage() {
           {tutorMsg && <p className="mt-3 text-sm text-slate-700">{tutorMsg}</p>}
         </div>
       )}
+
 
       {user.role === "ADMIN" && (
         <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">

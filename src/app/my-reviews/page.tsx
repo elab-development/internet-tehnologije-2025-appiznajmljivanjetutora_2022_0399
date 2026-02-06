@@ -1,11 +1,7 @@
 "use client";
 
-import Button from "@/components/Button";
-import { useRouter } from "next/navigation";
 
 export default function MyReviewsPage() {
-  const router = useRouter();
-
   return (
     <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">
       <div className="pointer-events-none absolute -right-24 top-[-120px] h-72 w-72 rounded-full bg-blue-300/40 blur-3xl" />
@@ -21,11 +17,6 @@ export default function MyReviewsPage() {
           Ovde će biti lista recenzija sa ocenama i komentarima.
         </div>
 
-        <div className="mt-6">
-          <Button variant="secondary" onClick={() => router.push("/me")}>
-            Nazad na moj nalog
-          </Button>
-        </div>
       </div>
     </main>
   );

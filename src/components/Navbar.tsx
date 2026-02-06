@@ -68,6 +68,18 @@ export default function Navbar() {
               >
                 Moje recenzije
               </Link>
+              <Link
+                href="/verification"
+                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              >
+                Verifikacija
+              </Link>
+              <Link
+                href="/me"
+                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              >
+                Moj nalog
+              </Link>
             </>
           ) : user?.role === "ADMIN" ? (
             <>

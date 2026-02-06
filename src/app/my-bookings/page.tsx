@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@/components/Button";
 import Link from "next/link";
 
 type MeUser = { korisnikId: number; role: "UCENIK" | "TUTOR" | "ADMIN" };
@@ -313,11 +312,6 @@ export default function MyBookingsPage() {
           )}
         </div>
 
-        <div className="mt-6">
-          <Button variant="secondary" onClick={() => router.push("/me")}>
-            Nazad na moj nalog
-          </Button>
-        </div>
       </div>
     </main>
   );
