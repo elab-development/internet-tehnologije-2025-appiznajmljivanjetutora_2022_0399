@@ -16,6 +16,9 @@ export async function PUT(
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
+  if (auth.role !== "ADMIN") {
+    return NextResponse.json({ error: "Nemate pravo da menjate recenziju." }, { status: 403 });
+  }
 
   const id = Number(params.id);
   if (!id) {
@@ -42,6 +45,9 @@ export async function DELETE(
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
+  }
+  if (auth.role !== "ADMIN") {
+    return NextResponse.json({ error: "Nemate pravo da obrisete recenziju." }, { status: 403 });
   }
 
   const id = Number(params.id);
