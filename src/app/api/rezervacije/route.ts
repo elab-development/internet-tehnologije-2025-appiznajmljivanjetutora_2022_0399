@@ -80,15 +80,35 @@ export async function POST(req: Request) {
       if (termin.length === 0) {
         throw { status: 404, message: "Termin ne postoji." };
       }
-      if (termin[0].status !== "SLOBODAN") {
+      if (termin[0].status !== "SLOBODAN" && termin[0].status !== "OTKAZAN") {
         throw { status: 409, message: "Termin nije slobodan." };
       }
 
       const existing = await tx
-        .select({ rezervacijaId: schema.rezervacija.rezervacijaId })
+        .select({
+          rezervacijaId: schema.rezervacija.rezervacijaId,
+          status: schema.rezervacija.status,
+        })
         .from(schema.rezervacija)
-        .where(eq(schema.rezervacija.terminId, body.terminId));
+        .where(eq(schema.rezervacija.terminId, body.terminId))
+        .for("update");
       if (existing.length > 0) {
+        if (existing[0].status === "OTKAZANA") {
+          await tx
+            .update(schema.rezervacija)
+            .set({
+              ucenikId,
+              status: body.status ?? "AKTIVNA",
+            })
+            .where(eq(schema.rezervacija.rezervacijaId, existing[0].rezervacijaId));
+
+          await tx
+            .update(schema.termin)
+            .set({ status: "REZERVISAN" })
+            .where(eq(schema.termin.terminId, body.terminId));
+
+          return;
+        }
         throw { status: 409, message: "Termin je vec rezervisan." };
       }
 

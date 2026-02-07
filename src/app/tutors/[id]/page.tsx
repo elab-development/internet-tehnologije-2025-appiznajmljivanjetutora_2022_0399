@@ -145,10 +145,10 @@ export default function TutorDetailsPage() {
       setTerminiLoading(true);
       setTerminiError(null);
       try {
-        const res = await fetch(`/api/termini?tutorId=${id}&status=SLOBODAN`);
+        const res = await fetch(`/api/termini?tutorId=${id}`);
         const data = await res.json();
         const list: Termin[] = data?.termini ?? [];
-        setTermini(list.filter((t) => t.status === "SLOBODAN"));
+        setTermini(list.filter((t) => t.status === "SLOBODAN" || t.status === "OTKAZAN"));
       } catch {
         setTerminiError("Greška pri učitavanju termina.");
       } finally {
