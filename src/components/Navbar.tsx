@@ -83,17 +83,30 @@ export default function Navbar() {
             </>
           ) : user?.role === "ADMIN" ? (
             <>
-              <Link
-                href="/complaints"
-                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              <span
+                className="cursor-not-allowed rounded-full bg-slate-100 px-3 py-1 text-slate-500"
+                aria-disabled="true"
+                title="Biće dostupno uskoro"
               >
                 Pregled žalbi
+              </span>
+              <Link
+                href="/admin-reviews"
+                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              >
+                Moderacija recenzija
               </Link>
               <Link
                 href="/verifications"
                 className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
               >
                 Pregled zahteva za verifikaciju
+              </Link>
+              <Link
+                href="/admin-users"
+                className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
+              >
+                Upravljanje korisnicima
               </Link>
               <Link
                 href="/me"
@@ -104,7 +117,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              {user?.role !== "ADMIN" && (
+              {user?.role === "UCENIK" && (
                 <Link
                   href="/tutors"
                   className="rounded-full bg-blue-50 px-3 py-1 text-blue-800 transition hover:bg-blue-100"
