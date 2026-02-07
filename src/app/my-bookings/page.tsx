@@ -19,6 +19,8 @@ type Rezervacija = {
   rezervacijaId: number;
   terminId: number;
   ucenikId: number;
+  ucenikIme?: string;
+  ucenikPrezime?: string;
   status: "AKTIVNA" | "OTKAZANA" | "ODRZANA";
 };
 
@@ -26,6 +28,8 @@ type BookingRow = {
   rezervacijaId: number;
   terminId: number;
   ucenikId?: number;
+  ucenikIme?: string;
+  ucenikPrezime?: string;
   status: Rezervacija["status"];
   datum: string;
   vremeOd: string;
@@ -51,6 +55,18 @@ function formatTime(value: string) {
 function formatPrice(value?: string) {
   if (!value) return "-";
   return `${value} RSD`;
+}
+
+function getStartDateTime(datum: string, vremeOd: string) {
+  const datePart = datum?.split("T")[0] ?? datum;
+  return new Date(`${datePart}T${vremeOd}`);
+}
+
+function canCancelBooking(row: BookingRow) {
+  const start = getStartDateTime(row.datum, row.vremeOd);
+  if (Number.isNaN(start.getTime())) return true;
+  const diffHours = (start.getTime() - Date.now()) / (1000 * 60 * 60);
+  return diffHours >= 24;
 }
 
 export default function MyBookingsPage() {
@@ -138,6 +154,8 @@ export default function MyBookingsPage() {
                 rezervacijaId: r.rezervacijaId,
                 terminId: r.terminId,
                 ucenikId: r.ucenikId,
+                ucenikIme: r.ucenikIme,
+                ucenikPrezime: r.ucenikPrezime,
                 status: r.status,
                 datum: t.datum,
                 vremeOd: t.vremeOd,
@@ -281,7 +299,11 @@ export default function MyBookingsPage() {
                           {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
                         </span>
                         {me?.role === "TUTOR" ? (
-                          <span className="text-slate-700">ID: {r.ucenikId}</span>
+                          <span className="text-slate-700">
+                            {r.ucenikIme && r.ucenikPrezime
+                              ? `${r.ucenikIme} ${r.ucenikPrezime}`
+                              : `ID: ${r.ucenikId}`}
+                          </span>
                         ) : (
                           <span className="text-slate-700">
                             <Link
@@ -312,6 +334,51 @@ export default function MyBookingsPage() {
                             variant="danger"
                             size="sm"
                             disabled={cancelingId === r.rezervacijaId}
+                            onClick={async () => {
+                              const ok = window.confirm(
+                                "Da li ste sigurni da želite da otkažete rezervaciju?"
+                              );
+                              if (!ok) return;
+                              setError(null);
+                              setCancelingId(r.rezervacijaId);
+                              try {
+                                const res = await fetch(`/api/rezervacije/${r.rezervacijaId}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ status: "OTKAZANA" }),
+                                });
+                                const data = await res.json();
+                                if (!res.ok) {
+                                  setError(data?.error || "Greška pri otkazivanju.");
+                                  return;
+                                }
+                                setRows((prev) =>
+                                  prev.map((x) =>
+                                    x.rezervacijaId === r.rezervacijaId
+                                      ? { ...x, status: "OTKAZANA" }
+                                      : x
+                                  )
+                                );
+                              } finally {
+                                setCancelingId(null);
+                              }
+                            }}
+                          >
+                            Otkaži
+                          </Button>
+                        )
+                      ))}
+                    </div>
+                  )}
+                  {me?.role === "TUTOR" && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {g.items.map((r) => (
+                        r.status === "AKTIVNA" && (
+                          <Button
+                            key={`cancel-${r.rezervacijaId}`}
+                            variant="danger"
+                            size="sm"
+                            disabled={cancelingId === r.rezervacijaId || !canCancelBooking(r)}
                             onClick={async () => {
                               const ok = window.confirm(
                                 "Da li ste sigurni da želite da otkažete rezervaciju?"

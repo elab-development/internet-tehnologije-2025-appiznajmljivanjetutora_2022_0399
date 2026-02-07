@@ -53,6 +53,9 @@ export default function TermsPage() {
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<
+    "SLOBODAN" | "REZERVISAN" | "OTKAZAN" | "SVE"
+  >("SVE");
 
   const [datum, setDatum] = useState("");
   const [vremeOd, setVremeOd] = useState("");
@@ -100,7 +103,11 @@ export default function TermsPage() {
     fetchTermini(me.korisnikId);
   }, [me, fetchTermini]);
 
-  const visibleTermini = useMemo(() => termini.filter(isFutureTerm), [termini]);
+  const visibleTermini = useMemo(() => {
+    const filtered = termini.filter(isFutureTerm);
+    if (statusFilter === "SVE") return filtered;
+    return filtered.filter((t) => t.status === statusFilter);
+  }, [termini, statusFilter]);
 
   const grouped = useMemo<GroupedTerms[]>(() => {
     if (visibleTermini.length === 0) return [];
@@ -117,7 +124,7 @@ export default function TermsPage() {
       }))
       .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
     return groups;
-  }, [termini]);
+  }, [visibleTermini]);
 
   async function addTermin() {
     setFormError(null);
@@ -267,6 +274,19 @@ export default function TermsPage() {
 
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-slate-900">Moji termini</h2>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-slate-700">Filter:</span>
+            <select
+              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+            >
+              <option value="SLOBODAN">Slobodni</option>
+              <option value="REZERVISAN">Rezervisani</option>
+              <option value="OTKAZAN">Otkazani</option>
+              <option value="SVE">Sve</option>
+            </select>
+          </div>
           {loading ? (
             <p className="mt-3 text-sm text-slate-600">Učitavam termine...</p>
           ) : grouped.length === 0 ? (

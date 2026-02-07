@@ -145,7 +145,7 @@ export default function TutorDetailsPage() {
       setTerminiLoading(true);
       setTerminiError(null);
       try {
-        const res = await fetch(`/api/termini?tutorId=${id}`);
+        const res = await fetch(`/api/termini?tutorId=${id}&status=SLOBODAN`);
         const data = await res.json();
         const list: Termin[] = data?.termini ?? [];
         setTermini(list.filter((t) => t.status === "SLOBODAN"));

@@ -20,6 +20,17 @@ type TutorProfile = {
   verifikovan: boolean;
 };
 
+type LanguageOption = {
+  jezikId: number;
+  naziv: string;
+};
+
+type TutorLanguage = {
+  jezikId: number;
+  naziv: string;
+  nivo: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+};
+
 type Termin = {
   terminId: number;
   tutorId: number;
@@ -51,6 +62,11 @@ export default function MePage() {
   const [tutorPrice, setTutorPrice] = useState("");
   const [tutorMsg, setTutorMsg] = useState<string | null>(null);
   const [tutorSaving, setTutorSaving] = useState(false);
+  const [languages, setLanguages] = useState<LanguageOption[]>([]);
+  const [tutorLanguages, setTutorLanguages] = useState<TutorLanguage[]>([]);
+  const [langId, setLangId] = useState("");
+  const [langLevel, setLangLevel] = useState<TutorLanguage["nivo"]>("B1");
+  const [langMsg, setLangMsg] = useState<string | null>(null);
   const [tutorStats, setTutorStats] = useState<{
     activeReservations: number;
     heldClasses: number;
@@ -84,6 +100,23 @@ export default function MePage() {
           setTutorProfile(data.tutor);
           setTutorBio(data.tutor.biografija ?? "");
           setTutorPrice(data.tutor.cenaPoCasu ?? "");
+        }
+        if (Array.isArray(data?.languages)) {
+          const mapped: TutorLanguage[] = data.languages.map(
+            (l: { jezikId: number; naziv: string; nivo: TutorLanguage["nivo"] }) => ({
+              jezikId: l.jezikId,
+              naziv: l.naziv,
+              nivo: l.nivo,
+            })
+          );
+          setTutorLanguages(mapped);
+        }
+        try {
+          const langRes = await fetch("/api/languages");
+          const langData = await langRes.json();
+          setLanguages(langData?.languages ?? []);
+        } catch {
+          setLanguages([]);
         }
         try {
           const tRes = await fetch(`/api/termini?tutorId=${user.korisnikId}`);
@@ -185,6 +218,10 @@ export default function MePage() {
         body: JSON.stringify({
           biografija: tutorBio.trim() || null,
           cenaPoCasu: tutorPrice.trim() || "0.00",
+          languages: tutorLanguages.map((l) => ({
+            jezikId: l.jezikId,
+            nivo: l.nivo,
+          })),
         }),
       });
       const data = await res.json();
@@ -196,6 +233,32 @@ export default function MePage() {
     } finally {
       setTutorSaving(false);
     }
+  }
+
+  function addTutorLanguage() {
+    setLangMsg(null);
+    const id = Number(langId);
+    if (!id) {
+      setLangMsg("Izaberite jezik.");
+      return;
+    }
+    const lang = languages.find((l) => l.jezikId === id);
+    if (!lang) {
+      setLangMsg("Neispravan jezik.");
+      return;
+    }
+    setTutorLanguages((prev) => {
+      const existing = prev.find((p) => p.jezikId === id);
+      if (existing) {
+        return prev.map((p) => (p.jezikId === id ? { ...p, nivo: langLevel } : p));
+      }
+      return [...prev, { jezikId: id, naziv: lang.naziv, nivo: langLevel }];
+    });
+    setLangId("");
+  }
+
+  function removeTutorLanguage(id: number) {
+    setTutorLanguages((prev) => prev.filter((l) => l.jezikId !== id));
   }
 
   if (!user) {
@@ -274,42 +337,6 @@ export default function MePage() {
             </Button>
           </div>
         </div>
-          {user.role === "TUTOR" && (
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
-              <h2 className="text-lg font-semibold text-slate-900">Uredi tutor profil</h2>
-              <p className="mt-1 text-sm text-slate-600">
-              Ažuriraj biografiju i cenu po času.
-              </p>
-
-              <div className="mt-4 grid gap-4">
-                <label className="grid gap-2 text-sm font-medium text-slate-700">
-                  Biografija
-                  <textarea
-                    className="min-h-[120px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
-                  placeholder="Napiši kratku biografiju..."
-                    value={tutorBio}
-                    onChange={(e) => setTutorBio(e.target.value)}
-                  />
-                </label>
-                <label className="grid gap-2 text-sm font-medium text-slate-700">
-                Cena po času
-                  <Input
-                    placeholder="npr 1200.00"
-                    value={tutorPrice}
-                    onChange={(e) => setTutorPrice(e.target.value)}
-                  />
-                </label>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button onClick={saveTutorProfile} disabled={tutorSaving} variant="primary">
-                {tutorSaving ? "Čuvam..." : "Sačuvaj izmene"}
-                </Button>
-              </div>
-
-              {tutorMsg && <p className="mt-3 text-sm text-slate-700">{tutorMsg}</p>}
-            </div>
-          )}
         </div>
 
         {user.role === "UCENIK" && (
@@ -369,6 +396,102 @@ export default function MePage() {
 
       </div>
 
+      {user.role === "TUTOR" && (
+        <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
+          <h2 className="text-lg font-semibold text-slate-900">Uredi tutor profil</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Ažuriraj biografiju i cenu po času.
+          </p>
+
+          <div className="mt-4 grid gap-4">
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Biografija
+              <textarea
+                className="min-h-[120px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none ring-blue-200 transition focus:ring-2"
+                placeholder="Napiši kratku biografiju..."
+                value={tutorBio}
+                onChange={(e) => setTutorBio(e.target.value)}
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium text-slate-700">
+              Cena po času
+              <Input
+                placeholder="npr 1200.00"
+                value={tutorPrice}
+                onChange={(e) => setTutorPrice(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-slate-900">Jezici i nivoi</h3>
+            <p className="mt-1 text-xs text-slate-600">
+              Dodaj jezike koje predaješ i nivo znanja.
+            </p>
+            <div className="mt-3 grid gap-3 md:grid-cols-[1fr_140px_auto]">
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                value={langId}
+                onChange={(e) => setLangId(e.target.value)}
+              >
+                <option value="">Izaberi jezik...</option>
+                {languages.map((l) => (
+                  <option key={l.jezikId} value={String(l.jezikId)}>
+                    {l.naziv}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                value={langLevel}
+                onChange={(e) => setLangLevel(e.target.value as TutorLanguage["nivo"])}
+              >
+                <option value="A1">A1</option>
+                <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+                <option value="C1">C1</option>
+                <option value="C2">C2</option>
+              </select>
+              <Button variant="secondary" onClick={addTutorLanguage}>
+                Dodaj
+              </Button>
+            </div>
+            {langMsg && <p className="mt-2 text-sm text-red-600">{langMsg}</p>}
+            {tutorLanguages.length === 0 ? (
+              <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+                Još nema unetih jezika.
+              </div>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tutorLanguages.map((l) => (
+                  <span
+                    key={`${l.jezikId}-${l.nivo}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-900"
+                  >
+                    {l.naziv} • {l.nivo}
+                    <button
+                      type="button"
+                      className="text-blue-700 hover:text-blue-900"
+                      onClick={() => removeTutorLanguage(l.jezikId)}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button onClick={saveTutorProfile} disabled={tutorSaving} variant="primary">
+              {tutorSaving ? "Čuvam..." : "Sačuvaj izmene"}
+            </Button>
+          </div>
+
+          {tutorMsg && <p className="mt-3 text-sm text-slate-700">{tutorMsg}</p>}
+        </div>
+      )}
 
 
 
