@@ -58,7 +58,22 @@ export async function PUT(
     return NextResponse.json({ error: "Nema podataka za izmenu." }, { status: 400 });
   }
 
-  await db.update(schema.termin).set(body).where(eq(schema.termin.terminId, id));
+  const updateData = {
+    datum: body.datum ? new Date(body.datum) : undefined,
+    vremeOd: body.vremeOd,
+    vremeDo: body.vremeDo,
+    status: body.status,
+  } as {
+    datum?: Date;
+    vremeOd?: string;
+    vremeDo?: string;
+    status?: "SLOBODAN" | "REZERVISAN" | "OTKAZAN";
+  };
+  if (updateData.datum && Number.isNaN(updateData.datum.getTime())) {
+    return NextResponse.json({ error: "Neispravan datum." }, { status: 400 });
+  }
+
+  await db.update(schema.termin).set(updateData).where(eq(schema.termin.terminId, id));
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }
@@ -79,6 +94,25 @@ export async function DELETE(
   const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
+  }
+
+  const termin = await db.query.termin.findFirst({
+    where: eq(schema.termin.terminId, id),
+    columns: { status: true, tutorId: true },
+  });
+  if (!termin) {
+    return NextResponse.json({ error: "Termin ne postoji." }, { status: 404 });
+  }
+
+  if (auth.role === "TUTOR" && termin.tutorId !== auth.korisnikId) {
+    return NextResponse.json({ error: "Nemate pravo da brisete ovaj termin." }, { status: 403 });
+  }
+
+  if (termin.status !== "SLOBODAN") {
+    return NextResponse.json(
+      { error: "Termin moze da se obrise samo ako je slobodan." },
+      { status: 409 }
+    );
   }
 
   await db.delete(schema.termin).where(eq(schema.termin.terminId, id));

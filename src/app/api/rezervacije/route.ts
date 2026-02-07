@@ -36,9 +36,12 @@ export async function GET(req: Request) {
       rezervacijaId: schema.rezervacija.rezervacijaId,
       terminId: schema.rezervacija.terminId,
       ucenikId: schema.rezervacija.ucenikId,
+      ucenikIme: schema.korisnik.ime,
+      ucenikPrezime: schema.korisnik.prezime,
       status: schema.rezervacija.status,
     })
     .from(schema.rezervacija)
+    .innerJoin(schema.korisnik, eq(schema.korisnik.korisnikId, schema.rezervacija.ucenikId))
     .where(where);
 
   return NextResponse.json({ rezervacije }, { status: 200 });
@@ -81,6 +84,14 @@ export async function POST(req: Request) {
         throw { status: 409, message: "Termin nije slobodan." };
       }
 
+      const existing = await tx
+        .select({ rezervacijaId: schema.rezervacija.rezervacijaId })
+        .from(schema.rezervacija)
+        .where(eq(schema.rezervacija.terminId, body.terminId));
+      if (existing.length > 0) {
+        throw { status: 409, message: "Termin je vec rezervisan." };
+      }
+
       await tx.insert(schema.rezervacija).values({
         terminId: body.terminId,
         ucenikId,
@@ -96,6 +107,14 @@ export async function POST(req: Request) {
     if (err && typeof err === "object" && "status" in err && "message" in err) {
       const e = err as { status: number; message: string };
       return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as { code?: string }).code === "ER_DUP_ENTRY"
+    ) {
+      return NextResponse.json({ error: "Termin je vec rezervisan." }, { status: 409 });
     }
     throw err;
   }
