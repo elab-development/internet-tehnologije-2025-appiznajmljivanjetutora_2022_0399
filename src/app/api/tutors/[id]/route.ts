@@ -7,6 +7,7 @@ type UpdateBody = Partial<{
   biografija: string | null;
   cenaPoCasu: string;
   verifikovan: boolean;
+  languages: Array<{ jezikId: number; nivo: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" }>;
 }>;
 
 export async function GET(
@@ -85,6 +86,19 @@ export async function PUT(
   }
 
   await db.update(schema.tutor).set(updateData).where(eq(schema.tutor.korisnikId, id));
+
+  if (Array.isArray(body.languages)) {
+    await db.delete(schema.tutorJezik).where(eq(schema.tutorJezik.tutorId, id));
+    if (body.languages.length > 0) {
+      await db.insert(schema.tutorJezik).values(
+        body.languages.map((l) => ({
+          tutorId: id,
+          jezikId: l.jezikId,
+          nivo: l.nivo,
+        }))
+      );
+    }
+  }
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }
