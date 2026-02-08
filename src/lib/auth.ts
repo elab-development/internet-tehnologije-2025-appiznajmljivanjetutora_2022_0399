@@ -6,16 +6,17 @@ export type JwtPayload = {
   korisnikId: number;
   role: "UCENIK" | "TUTOR" | "ADMIN";
 };
-
-export async function signToken(payload: JwtPayload) {
+//vraca potpisan token za dati payload (korisnikId i role)
+export async function signToken(payload: JwtPayload) { 
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
     .sign(secret);
 }
-
-export async function verifyToken(token: string) {
+//vraca payload iz tokena ako je validan, baci error ako nije
+//(nepotpisan, istekao, nevalidan...)
+export async function verifyToken(token: string) { 
   const { payload } = await jwtVerify(token, secret);
   return payload as unknown as JwtPayload;
 }

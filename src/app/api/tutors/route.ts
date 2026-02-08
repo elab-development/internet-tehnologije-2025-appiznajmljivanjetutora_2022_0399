@@ -10,6 +10,7 @@ type CreateBody = {
   verifikovan?: boolean;
 };
 
+//vrati listu tutora koji odgovaraju prosledjenim filterima (verifikovan, maxCena, jezik, nivo)
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
@@ -85,28 +86,3 @@ export async function GET(req: Request) {
 }
 
 type Level = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
-
-export async function POST(req: Request) {
-  const auth = await getAuthPayload();
-  if (!auth) {
-    return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
-  }
-  if (auth.role !== "ADMIN") {
-    return NextResponse.json({ error: "Nemate pravo da kreirate profil." }, { status: 403 });
-  }
-
-  const body = (await req.json()) as CreateBody;
-  if (!body?.korisnikId) {
-    return NextResponse.json({ error: "Korisnik ID je obavezan." }, { status: 400 });
-  }
-
-  await db.insert(schema.tutor).values({
-    korisnikId: body.korisnikId,
-    biografija: body.biografija ?? null,
-    cenaPoCasu: body.cenaPoCasu ?? "0.00",
-    verifikovan: body.verifikovan ?? false,
-    prosecnaOcena: "0.00",
-  });
-
-  return NextResponse.json({ ok: true }, { status: 201 });
-}

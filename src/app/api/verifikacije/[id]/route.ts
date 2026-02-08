@@ -8,6 +8,9 @@ type UpdateBody = {
   status: "ODOBREN" | "ODBIJEN";
 };
 
+//omoguci adminima da odobre ili odbiju zahteve za verifikaciju tutor profila
+//samo zahteve sa statusom "NOV" mogu da se obrade, a 
+//nakon odobrenja se azurira i tutor profil na verifikovan=true
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }

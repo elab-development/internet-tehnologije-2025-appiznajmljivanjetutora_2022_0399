@@ -10,6 +10,7 @@ type UpdateBody = Partial<{
   languages: Array<{ jezikId: number; nivo: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" }>;
 }>;
 
+//vrati potrebne informacije o pojedinacnom tutoru
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -51,7 +52,7 @@ export async function GET(
 
   return NextResponse.json({ tutor, languages }, { status: 200 });
 }
-
+//omogući tutorima da ažuriraju svoj profil (biografija, cena, jezici koje predaju)
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -67,7 +68,7 @@ export async function PUT(
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
 
-  if (auth.role !== "ADMIN" && auth.korisnikId !== id) {
+  if (auth.role !== "TUTOR" && auth.korisnikId !== id) {
     return NextResponse.json({ error: "Nemate pravo da menjate profil." }, { status: 403 });
   }
 
@@ -80,10 +81,6 @@ export async function PUT(
     biografija: body.biografija,
     cenaPoCasu: body.cenaPoCasu,
   };
-
-  if (auth.role === "ADMIN") {
-    updateData.verifikovan = body.verifikovan;
-  }
 
   await db.update(schema.tutor).set(updateData).where(eq(schema.tutor.korisnikId, id));
 
@@ -103,26 +100,3 @@ export async function PUT(
   return NextResponse.json({ ok: true }, { status: 200 });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const auth = await getAuthPayload();
-  if (!auth) {
-    return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
-  }
-
-  const { id: idParam } = await params;
-  const id = Number(idParam);
-  if (!id) {
-    return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
-  }
-
-  if (auth.role !== "ADMIN" && auth.korisnikId !== id) {
-    return NextResponse.json({ error: "Nemate pravo da obrišete profil." }, { status: 403 });
-  }
-
-  await db.delete(schema.tutor).where(eq(schema.tutor.korisnikId, id));
-
-  return NextResponse.json({ ok: true }, { status: 200 });
-}

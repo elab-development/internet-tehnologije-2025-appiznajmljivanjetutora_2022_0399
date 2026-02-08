@@ -33,7 +33,6 @@ async function main() {
 
   if (!adminExists) {
     const hashed = await bcrypt.hash("Admin123!", 10);
-
     const ins = await db.insert(schema.korisnik).values({
       ime: "Admin",
       prezime: "Adminovic",

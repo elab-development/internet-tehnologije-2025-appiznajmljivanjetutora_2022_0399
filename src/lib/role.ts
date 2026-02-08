@@ -1,6 +1,7 @@
 import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 
+//vraca rolu korisnika na osnovu njegovog korisnikId 
 export async function getRoleForUser(korisnikId: number) {
   const isAdmin = await db.query.administrator.findFirst({
     where: eq(schema.administrator.korisnikId, korisnikId),

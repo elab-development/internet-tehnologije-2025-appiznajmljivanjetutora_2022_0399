@@ -8,6 +8,8 @@ type CreateBody = {
   dokumentUrl: string;
 };
 
+//vrati sve zahteve za verifikaciju tutor profila, sa opcionalnim filterom po statusu (NOV, ODOBREN, ODBIJEN) 
+//- samo za admina
 export async function GET(req: Request) {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -45,6 +47,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ zahtevi }, { status: 200 });
 }
 
+//omoguci tutorima da podnesu zahtev za verifikaciju svog profila 
 export async function POST(req: Request) {
   const auth = await getAuthPayload();
   if (!auth) {

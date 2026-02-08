@@ -3,14 +3,10 @@ import { db, schema } from "@/db";
 import { and, eq } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
-type CreateBody = {
-  tutorId: number;
-};
+type CreateBody = {tutorId: number;};
+type DeleteBody = {tutorId: number;};
 
-type DeleteBody = {
-  tutorId: number;
-};
-
+//vraca listu svih favorita za prijavljenog učenika
 export async function GET() {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -20,17 +16,16 @@ export async function GET() {
     return NextResponse.json({ favoriti: [] }, { status: 200 });
   }
 
-  const favoriti = await db
-    .select({
-      tutorId: schema.favorit.tutorId,
-      datumDodavanja: schema.favorit.datumDodavanja,
+  const favoriti = await db.select({
+    tutorId: schema.favorit.tutorId,
+     datumDodavanja: schema.favorit.datumDodavanja,
     })
     .from(schema.favorit)
     .where(eq(schema.favorit.ucenikId, auth.korisnikId));
-
   return NextResponse.json({ favoriti }, { status: 200 });
 }
 
+//omogućava učeniku da doda tutora u favorite
 export async function POST(req: Request) {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -41,7 +36,7 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json()) as CreateBody;
-  if (!body?.tutorId) {
+  if (!body?.tutorId) { 
     return NextResponse.json({ error: "Tutor ID je obavezan." }, { status: 400 });
   }
 
@@ -52,7 +47,6 @@ export async function POST(req: Request) {
     ),
     columns: { tutorId: true },
   });
-
   if (existing) {
     return NextResponse.json({ ok: true, already: true }, { status: 200 });
   }
@@ -62,7 +56,6 @@ export async function POST(req: Request) {
     tutorId: body.tutorId,
     datumDodavanja: new Date(),
   });
-
   return NextResponse.json({ ok: true }, { status: 201 });
 }
 
@@ -88,6 +81,5 @@ export async function DELETE(req: Request) {
         eq(schema.favorit.tutorId, body.tutorId)
       )
     );
-
   return NextResponse.json({ ok: true }, { status: 200 });
 }

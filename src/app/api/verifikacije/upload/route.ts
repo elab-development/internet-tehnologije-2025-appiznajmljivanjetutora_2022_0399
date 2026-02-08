@@ -4,6 +4,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
+//omogući tutorima da uploaduju dokumente za verifikaciju svog profila (npr. diplomu ili sertifikat)
 export async function POST(req: Request) {
   const auth = await getAuthPayload();
   if (!auth) {

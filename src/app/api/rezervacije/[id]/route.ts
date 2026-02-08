@@ -6,7 +6,8 @@ import { getAuthPayload } from "@/lib/auth-server";
 type UpdateBody = Partial<{
   status: "AKTIVNA" | "OTKAZANA" | "ODRZANA";
 }>;
-
+//otkazivanje rezervacije je moguce samo ako je trenutni status "AKTIVNA"
+//ili ako je do pocetka termina ostalo vise od 24h
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -16,17 +17,18 @@ export async function PUT(
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
 
+  //vrati id rezervacije iz parametara i podatke za update iz tela zahteva
   const { id: idParam } = await params;
   const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
-
   const body = (await req.json()) as UpdateBody;
   if (!body || Object.keys(body).length === 0) {
     return NextResponse.json({ error: "Nema podataka za izmenu." }, { status: 400 });
   }
 
+  //proveri da li rezervacija postoji i da li je korisnik ima pravo da je menja
   if (body.status === "OTKAZANA") {
     const rez = await db
       .select({
@@ -62,6 +64,7 @@ export async function PUT(
       return NextResponse.json({ error: "Nemate pravo da otkazete ovu rezervaciju." }, { status: 403 });
     }
 
+    //proveri da li je otkazivanje moguce (nije moguce ako je manje od 24h do pocetka termina)
     const toDatePart = (value: unknown) => {
       if (value instanceof Date) {
         return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(
@@ -96,7 +99,8 @@ export async function PUT(
       );
     }
   }
-
+  //azuriraj rezervaciju i ako je status postavljen na "OTKAZANA", azuriraj 
+  //i status termina na "OTKAZAN"
   await db
     .update(schema.rezervacija)
     .set(body)
@@ -118,24 +122,3 @@ export async function PUT(
   return NextResponse.json({ ok: true }, { status: 200 });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const auth = await getAuthPayload();
-  if (!auth) {
-    return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
-  }
-
-  const { id: idParam } = await params;
-  const id = Number(idParam);
-  if (!id) {
-    return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
-  }
-
-  await db
-    .delete(schema.rezervacija)
-    .where(eq(schema.rezervacija.rezervacijaId, id));
-
-  return NextResponse.json({ ok: true }, { status: 200 });
-}

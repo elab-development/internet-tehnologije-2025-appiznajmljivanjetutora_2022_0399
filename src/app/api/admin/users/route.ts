@@ -11,7 +11,8 @@ export async function GET() {
   if (auth.role !== "ADMIN") {
     return NextResponse.json({ users: [] }, { status: 200 });
   }
-
+// vraca listu svih korisnika sa njihovim podacima 
+// (korisnikId, ime, prezime, email, statusNaloga) i rolu 
   const users = await db
     .select({
       korisnikId: schema.korisnik.korisnikId,
@@ -26,24 +27,18 @@ export async function GET() {
     .from(schema.korisnik)
     .leftJoin(schema.tutor, eq(schema.tutor.korisnikId, schema.korisnik.korisnikId))
     .leftJoin(schema.ucenik, eq(schema.ucenik.korisnikId, schema.korisnik.korisnikId))
-    .leftJoin(
-      schema.administrator,
-      eq(schema.administrator.korisnikId, schema.korisnik.korisnikId)
+    .leftJoin(schema.administrator,eq(schema.administrator.korisnikId, schema.korisnik.korisnikId)
     );
 
+  //mapiramo podatke iz baze u format koji želimo da vratimo klijentu, 
+  //i određujemo rolu na osnovu povezanih tabela (tutor, ucenik, administrator)
   const mapped = users.map((u) => ({
     korisnikId: u.korisnikId,
     ime: u.ime,
     prezime: u.prezime,
     email: u.email,
     statusNaloga: u.statusNaloga,
-    role: u.isAdmin
-      ? "ADMIN"
-      : u.isTutor
-        ? "TUTOR"
-        : u.isUcenik
-          ? "UCENIK"
-          : "KORISNIK",
+    role: u.isAdmin? "ADMIN": u.isTutor? "TUTOR": u.isUcenik? "UCENIK": "KORISNIK",
   }));
 
   return NextResponse.json({ users: mapped }, { status: 200 });

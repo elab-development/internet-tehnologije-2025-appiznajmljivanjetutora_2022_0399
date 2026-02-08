@@ -4,6 +4,7 @@ import { desc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/mysql-core";
 import { getAuthPayload } from "@/lib/auth-server";
 
+//vrati listu svih recenzija sa podacima o rezervaciji, terminu, tutoru i učeniku
 export async function GET() {
   const auth = await getAuthPayload();
   if (!auth) {

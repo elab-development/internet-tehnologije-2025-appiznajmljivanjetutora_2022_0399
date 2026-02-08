@@ -26,11 +26,10 @@ export async function GET() {
         statusNaloga: true,
       },
     });
-
     if (!user) {
       return NextResponse.json({ user: null }, { status: 200 });
     }
-
+  //vracamo podatke o korisniku (korisnikId, ime, prezime, email, statusNaloga) i rolu iz tokena
     return NextResponse.json(
       { user: { ...user, role: payload.role } },
       { status: 200 }

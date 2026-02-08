@@ -11,6 +11,13 @@ type CreateBody = {
   status?: "SLOBODAN" | "REZERVISAN" | "OTKAZAN";
 };
 
+//get metoda vraca termine koji odgovaraju prosledjenim parametrima (tutorId, datum, status)
+//pozivaju je 
+//ucenici:
+//- da vide koje termine imaju rezervisane 
+//- da vide slobodne termine tutora
+//tutori 
+//- da vide svoje defisane termine 
 export async function GET(req: Request) {
   await db.execute(sql`
     UPDATE termin t
@@ -44,6 +51,9 @@ export async function GET(req: Request) {
     status: schema.termin.status,
   };
 
+  //vrati samo slobodne termine ako je status "SLOBODAN",
+  //a ako je status "REZERVISAN" ili "OTKAZAN",
+  //vrati sve termine koji odgovaraju ostalim parametrima
   const termini =
     status === "SLOBODAN"
       ? await db
@@ -56,12 +66,13 @@ export async function GET(req: Request) {
   return NextResponse.json({ termini }, { status: 200 });
 }
 
+//omogući tutorima da kreiraju nove termine
 export async function POST(req: Request) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
-  if (auth.role !== "TUTOR" && auth.role !== "ADMIN") {
+  if (auth.role !== "TUTOR" ) {
     return NextResponse.json({ error: "Nemate pravo da kreirate termin." }, { status: 403 });
   }
 

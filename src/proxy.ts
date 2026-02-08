@@ -1,65 +1,43 @@
-//  neulogovan ne moze nigde osim login/register 
-// Plus: /tutors sme samo UCENIK.
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const AUTH_COOKIE = "auth_token"; // mora da se poklapa sa AUTH_COOKIE u lib/auth.ts
-const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-const PROTECTED_API_PREFIXES = [
-  "/api/termini",
-  "/api/rezervacije",
-  "/api/recenzije",
-  "/api/favoriti",
-  "/api/verifikacije",
-];
+const AUTH_COOKIE = "auth_token";
 
+//preusmerava na login ako nema tokena, ili ako je token nevalidan (samo za API mutacije), 
+//ili ako korisnik bez role UCENIK pokusa da pristupi /tutors stranici
 function redirectToLogin(req: NextRequest) {
   const url = req.nextUrl.clone();
   url.pathname = "/login";
-  url.searchParams.set("next", req.nextUrl.pathname);
   return NextResponse.redirect(url);
 }
 
+//baca izuzetak ako token nije validan, cita samo rolu iz tokena 
 async function readRoleFromToken(token: string) {
-  const secret =new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret");
-
-  if (!secret) throw new Error("Nema JWT/AUTH secret u env-u");
-
-  const { payload } = await jwtVerify(
-    token, secret
-  );
-
-  // Ocekivano: payload.role = "UCENIK" | "TUTOR" | "ADMIN"
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret");
+  const { payload } = await jwtVerify(token, secret);
   return payload?.role as string | undefined;
 }
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // javno dozvoljeno
   const isPublicPage = pathname === "/login" || pathname === "/register";
-  const isApi = pathname.startsWith("/api/");
   const isAuthApi = pathname.startsWith("/api/auth/");
-  const isProtectedApi = PROTECTED_API_PREFIXES.some((p) => pathname.startsWith(p));
-  const isPublicAsset =
-    pathname.startsWith("/_next/") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml";
+  const isPublicAsset = pathname.startsWith("/_next/") || pathname === "/favicon.ico";
+  const isApi = pathname.startsWith("/api/");
+  const isMutation = req.method !== "GET" && req.method !== "HEAD" && req.method !== "OPTIONS";
 
+  //za javne stranice, javne API-je i statičke resurse ne proverava token
   if (isPublicAsset || isAuthApi || isPublicPage) {
     return NextResponse.next();
   }
 
-  // API: samo mutacije zahtevaju auth
-  if (isProtectedApi && !SAFE_METHODS.has(req.method)) {
-    const token = req.cookies.get(AUTH_COOKIE)?.value;
-    if (!token) {
-      return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
-    }
+ // Ako korisnik nije prijavljen, preusmeri na login
+  const token = req.cookies.get(AUTH_COOKIE)?.value;
+  if (!token) return redirectToLogin(req);
 
+  // Za API mutacije uvek traži validan token
+  if (isApi && isMutation) {
     try {
       await readRoleFromToken(token);
       return NextResponse.next();
@@ -68,35 +46,9 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // Ostale API rute (npr. /api/me) ostaju javne
-  if (isApi) {
-    return NextResponse.next();
-  }
-
-  // sve ostalo je privatno
-  const token = req.cookies.get(AUTH_COOKIE)?.value;
-  if (!token) return redirectToLogin(req);
-
-  // Tutors-only: UCENIK
-  if (pathname.startsWith("/tutors")) {
-    try {
-      const role = await readRoleFromToken(token);
-      if (role !== "UCENIK") {
-        const url = req.nextUrl.clone();
-        url.pathname = "/me";
-        return NextResponse.redirect(url);
-      }
-    } catch {
-      return redirectToLogin(req);
-    }
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    // Primeni middleware na sve osim statickih fajlova
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

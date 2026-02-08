@@ -11,7 +11,7 @@ export async function GET() {
   if (auth.role !== "UCENIK") {
     return NextResponse.json({ rezervacije: [] }, { status: 200 });
   }
-
+  //azuriraj status rezervacija koje su aktivne, ali im je termin prosao na "odrzana"
   await db.execute(sql`
     UPDATE rezervacija r
     JOIN termin t ON r.termin_id = t.termin_id
@@ -19,7 +19,7 @@ export async function GET() {
     WHERE r.status_rezervacije = 'AKTIVNA'
       AND TIMESTAMP(t.datum, t.vreme_do) < NOW()
   `);
-
+ //vrati sve rezervacije ucenika sa informacijama o terminu i tutorima
   const rows = await db
     .select({
       rezervacijaId: schema.rezervacija.rezervacijaId,

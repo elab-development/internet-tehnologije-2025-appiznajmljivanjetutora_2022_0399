@@ -4,6 +4,8 @@ import { zahtevVerifikacije } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
+//vrati istoriju zahteva za verifikaciju tutor profila 
+//za trenutno prijavljenog tutora
 export async function GET() {
   const auth = await getAuthPayload();
   if (!auth) {

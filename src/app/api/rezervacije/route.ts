@@ -8,8 +8,13 @@ type CreateBody = {
   ucenikId?: number;
   status?: "AKTIVNA" | "OTKAZANA" | "ODRZANA";
 };
+type Status = "AKTIVNA" | "OTKAZANA" | "ODRZANA";
+
 
 export async function GET(req: Request) {
+  //osvezi status rezervacija koje su aktivne, ali im je termin prosao na "odrzana"
+  // Ovo je potrebno jer se status rezervacije ne menja automatski kada prođe termin, 
+  // pa se na ovaj način osiguravamo da su podaci konzistentni.
   await db.execute(sql`
     UPDATE rezervacija r
     JOIN termin t ON r.termin_id = t.termin_id
@@ -18,6 +23,8 @@ export async function GET(req: Request) {
       AND TIMESTAMP(t.datum, t.vreme_do) < NOW()
   `);
 
+  //vrati sve rezervacije koje odgovaraju prosledjenim 
+  //parametrima (ucenikId, terminId, status)
   const { searchParams } = new URL(req.url);
   const ucenikId = searchParams.get("ucenikId");
   const terminId = searchParams.get("terminId");
@@ -52,7 +59,7 @@ export async function POST(req: Request) {
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
   }
-  if (auth.role !== "UCENIK" && auth.role !== "ADMIN") {
+  if (auth.role !== "UCENIK" ) {
     return NextResponse.json({ error: "Nemate pravo da kreirate rezervaciju." }, { status: 403 });
   }
 
@@ -65,9 +72,11 @@ export async function POST(req: Request) {
   if (!ucenikId) {
     return NextResponse.json({ error: "Ucenik ID je obavezan." }, { status: 400 });
   }
-
+  //transakcija koja osigurava da se rezervacija kreira samo ako je termin slobodan, 
+  //i da se status termina azurira na "REZERVISAN"
   try {
     await db.transaction(async (tx) => {
+      //zakljucaj termin za update kako bi izbegli race-condtions
       const termin = await tx
         .select({
           terminId: schema.termin.terminId,
@@ -80,10 +89,11 @@ export async function POST(req: Request) {
       if (termin.length === 0) {
         throw { status: 404, message: "Termin ne postoji." };
       }
+      //dozvoli ponovnu rezervaciju ako je prethodna otkazana
       if (termin[0].status !== "SLOBODAN" && termin[0].status !== "OTKAZAN") {
         throw { status: 409, message: "Termin nije slobodan." };
       }
-
+      //zakljucaj rezervacije za update 
       const existing = await tx
         .select({
           rezervacijaId: schema.rezervacija.rezervacijaId,
@@ -94,6 +104,7 @@ export async function POST(req: Request) {
         .for("update");
       if (existing.length > 0) {
         if (existing[0].status === "OTKAZANA") {
+          //ako je rezervacija otkazana, azuriraj je umesto da kreiras novu
           await tx
             .update(schema.rezervacija)
             .set({
@@ -101,7 +112,7 @@ export async function POST(req: Request) {
               status: body.status ?? "AKTIVNA",
             })
             .where(eq(schema.rezervacija.rezervacijaId, existing[0].rezervacijaId));
-
+          //azuriraj status termina na "REZERVISAN"
           await tx
             .update(schema.termin)
             .set({ status: "REZERVISAN" })
@@ -111,13 +122,13 @@ export async function POST(req: Request) {
         }
         throw { status: 409, message: "Termin je vec rezervisan." };
       }
-
+      //ako ne postoji rezervacija, kreiraj novu
       await tx.insert(schema.rezervacija).values({
         terminId: body.terminId,
         ucenikId,
         status: body.status ?? "AKTIVNA",
       });
-
+      //azuriraj status termina na "REZERVISAN"
       await tx
         .update(schema.termin)
         .set({ status: "REZERVISAN" })
@@ -142,4 +153,3 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true }, { status: 201 });
 }
 
-type Status = "AKTIVNA" | "OTKAZANA" | "ODRZANA";
