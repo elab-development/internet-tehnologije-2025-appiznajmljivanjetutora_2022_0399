@@ -30,7 +30,7 @@ export default function Navbar() {
             pathname === "/login" || pathname === "/register" ? "mx-auto" : ""
           }`}
         >
-          TutorApp
+          TutorBookingApp
         </span>
 
         {pathname !== "/login" && pathname !== "/register" && (
