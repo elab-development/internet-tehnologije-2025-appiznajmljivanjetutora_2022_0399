@@ -26,7 +26,27 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const terminId = searchParams.get("terminId");
   if (!terminId) {
-    return NextResponse.json({ error: "Termin ID je obavezan." }, { status: 400 });
+    const auth = await getAuthPayload();
+    if (!auth) {
+      return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
+    }
+    if (auth.role !== "ADMIN") {
+      return NextResponse.json({ error: "Nemate pravo pristupa." }, { status: 403 });
+    }
+
+    const rezervacije = await db
+      .select({
+        rezervacijaId: schema.rezervacija.rezervacijaId,
+        terminId: schema.rezervacija.terminId,
+        ucenikId: schema.rezervacija.ucenikId,
+        ucenikIme: schema.korisnik.ime,
+        ucenikPrezime: schema.korisnik.prezime,
+        status: schema.rezervacija.status,
+      })
+      .from(schema.rezervacija)
+      .innerJoin(schema.korisnik, eq(schema.korisnik.korisnikId, schema.rezervacija.ucenikId));
+
+    return NextResponse.json({ rezervacije }, { status: 200 });
   }
 
   const where = eq(schema.rezervacija.terminId, Number(terminId));
