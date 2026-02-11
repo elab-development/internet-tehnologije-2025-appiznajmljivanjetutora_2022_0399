@@ -75,6 +75,7 @@ export default function MyBookingsPage() {
   const [rows, setRows] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelWarning, setCancelWarning] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<number | null>(null);
   const [studentFilter, setStudentFilter] = useState<
     "AKTIVNA" | "OTKAZANA" | "ODRZANA" | "SVE"
@@ -211,6 +212,9 @@ export default function MyBookingsPage() {
             ? "Prikaz rezervacija koje se odnose na vaše termine."
             : "Prikaz rezervacija koje ste napravili kod tutora."}
         </p>
+        {cancelWarning && (
+          <p className="mt-2 text-sm text-red-600">{cancelWarning}</p>
+        )}
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
@@ -275,156 +279,106 @@ export default function MyBookingsPage() {
                     <div
                       className={`grid ${
                         me?.role === "UCENIK"
-                          ? "grid-cols-[140px_1fr_140px_120px]"
-                          : "grid-cols-[140px_1fr_120px]"
+                          ? "grid-cols-[150px_1.2fr_140px_130px_150px]"
+                          : "grid-cols-[150px_1.2fr_130px_150px]"
                       } bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600`}
                     >
                       <span>Vreme</span>
                       <span>{me?.role === "TUTOR" ? "Učenik" : "Tutor"}</span>
                       {me?.role === "UCENIK" && <span>Cena</span>}
                       <span className="text-right">Status</span>
+                      <span className="text-right">Akcija</span>
                     </div>
-                    {g.items.map((r, idx) => (
-                      <div
-                        key={r.rezervacijaId}
-                        className={`grid ${
-                          me?.role === "UCENIK"
-                            ? "grid-cols-[140px_1fr_140px_120px]"
-                            : "grid-cols-[140px_1fr_120px]"
-                        } items-center px-4 py-2 text-sm ${
-                          idx === g.items.length - 1 ? "" : "border-b border-slate-100"
-                        }`}
-                      >
-                        <span className="font-medium text-slate-900">
-                          {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
-                        </span>
-                        {me?.role === "TUTOR" ? (
-                          <span className="text-slate-700">
-                            {r.ucenikIme && r.ucenikPrezime
-                              ? `${r.ucenikIme} ${r.ucenikPrezime}`
-                              : `ID: ${r.ucenikId}`}
+                    {g.items.map((r, idx) => {
+                      const canCancel = canCancelBooking(r);
+                      return (
+                        <div
+                          key={r.rezervacijaId}
+                          className={`grid ${
+                            me?.role === "UCENIK"
+                              ? "grid-cols-[150px_1.2fr_140px_130px_150px]"
+                              : "grid-cols-[150px_1.2fr_130px_150px]"
+                          } items-center px-4 py-2 text-sm ${
+                            idx === g.items.length - 1 ? "" : "border-b border-slate-100"
+                          }`}
+                        >
+                          <span className="font-medium text-slate-900">
+                            {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
                           </span>
-                        ) : (
-                          <span className="text-slate-700">
-                            <Link
-                              className="font-semibold text-blue-700 hover:text-blue-800"
-                              href={`/tutors/${r.tutorId}`}
-                            >
-                              {r.tutorIme} {r.tutorPrezime}
-                            </Link>
+                          {me?.role === "TUTOR" ? (
+                            <span className="text-slate-700">
+                              {r.ucenikIme && r.ucenikPrezime
+                                ? `${r.ucenikIme} ${r.ucenikPrezime}`
+                                : `ID: ${r.ucenikId}`}
+                            </span>
+                          ) : (
+                            <span className="text-slate-700">
+                              <Link
+                                className="font-semibold text-blue-700 hover:text-blue-800"
+                                href={`/tutors/${r.tutorId}`}
+                              >
+                                {r.tutorIme} {r.tutorPrezime}
+                              </Link>
+                            </span>
+                          )}
+                          {me?.role === "UCENIK" && (
+                            <span className="text-slate-700">{formatPrice(r.cenaPoCasu)}</span>
+                          )}
+                          <span className="text-right">
+                            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
+                              {r.status}
+                            </span>
                           </span>
-                        )}
-                        {me?.role === "UCENIK" && (
-                          <span className="text-slate-700">{formatPrice(r.cenaPoCasu)}</span>
-                        )}
-                        <span className="text-right">
-                          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
-                            {r.status}
-                          </span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {me?.role === "UCENIK" && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {g.items.map((r) => (
-                        r.status === "AKTIVNA" && (
-                          <Button
-                            key={`cancel-${r.rezervacijaId}`}
-                            variant="danger"
-                            size="sm"
-                            disabled={cancelingId === r.rezervacijaId}
-                            onClick={async () => {
-                              const ok = window.confirm(
-                                "Da li ste sigurni da želite da otkažete rezervaciju?"
-                              );
-                              if (!ok) return;
-                              setError(null);
-                              setCancelingId(r.rezervacijaId);
-                              try {
-                                const res = await fetch(`/api/rezervacije/${r.rezervacijaId}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ status: "OTKAZANA" }),
-                                });
-                                const data = await res.json();
-                                if (!res.ok) {
-                                  setError(data?.error || "Greška pri otkazivanju.");
-                                  return;
-                                }
-                                setRows((prev) =>
-                                  prev.map((x) =>
-                                    x.rezervacijaId === r.rezervacijaId
-                                      ? { ...x, status: "OTKAZANA" }
-                                      : x
-                                  )
-                                );
-                              } finally {
-                                setCancelingId(null);
-                              }
-                            }}
-                          >
-                            Otkaži
-                          </Button>
-                        )
-                      ))}
-                    </div>
-                  )}
-                  {me?.role === "TUTOR" && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {g.items.map((r) => (
-                        r.status === "AKTIVNA" && (
-                          <Button
-                            key={`cancel-${r.rezervacijaId}`}
-                            variant="danger"
-                            size="sm"
-                            disabled={cancelingId === r.rezervacijaId || !canCancelBooking(r)}
-                            onClick={async () => {
-                              const ok = window.confirm(
-                                "Da li ste sigurni da želite da otkažete rezervaciju?"
-                              );
-                              if (!ok) return;
-                              setError(null);
-                              setCancelingId(r.rezervacijaId);
-                              try {
-                                const res = await fetch(`/api/rezervacije/${r.rezervacijaId}`, {
-                                  method: "PUT",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ status: "OTKAZANA" }),
-                                });
-                                const data = await res.json();
-                                if (!res.ok) {
-                                  setError(data?.error || "Greška pri otkazivanju.");
-                                  return;
-                                }
-                                setRows((prev) =>
-                                  prev.map((x) =>
-                                    x.rezervacijaId === r.rezervacijaId
-                                      ? { ...x, status: "OTKAZANA" }
-                                      : x
-                                  )
-                                );
-                              } finally {
-                                setCancelingId(null);
-                              }
-                            }}
-                          >
-                            Otkaži
-                          </Button>
-                        )
-                      ))}
-                    </div>
-                  )}
-                  {me?.role === "UCENIK" && (
-                    <div className="mt-4 grid gap-3">
-                      {g.items.map((r) => (
-                        r.status === "ODRZANA" && (
-                          <div key={`review-${r.rezervacijaId}`} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <span className="text-sm font-semibold text-slate-900">
-                                Recenzija za termin {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
-                              </span>
-                              {reviewedIds[r.rezervacijaId] ? (
+                          <span className="text-right">
+                            {r.status === "AKTIVNA" ? (
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                disabled={cancelingId === r.rezervacijaId}
+                                onClick={async () => {
+                                  setCancelWarning(null);
+                                  const ok = window.confirm(
+                                    "Da li ste sigurni da želite da otkažete rezervaciju?"
+                                  );
+                                  if (!ok) return;
+                                  if (!canCancel) {
+                                    setCancelWarning(
+                                      "Otkazivanje nije moguće manje od 24h pre početka termina."
+                                    );
+                                    return;
+                                  }
+                                  setError(null);
+                                  setCancelingId(r.rezervacijaId);
+                                  try {
+                                    const res = await fetch(
+                                      `/api/rezervacije/${r.rezervacijaId}`,
+                                      {
+                                        method: "PUT",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ status: "OTKAZANA" }),
+                                      }
+                                    );
+                                    const data = await res.json();
+                                    if (!res.ok) {
+                                      setError(data?.error || "Greška pri otkazivanju.");
+                                      return;
+                                    }
+                                    setRows((prev) =>
+                                      prev.map((x) =>
+                                        x.rezervacijaId === r.rezervacijaId
+                                          ? { ...x, status: "OTKAZANA" }
+                                          : x
+                                      )
+                                    );
+                                  } finally {
+                                    setCancelingId(null);
+                                  }
+                                }}
+                              >
+                                Otkaži
+                              </Button>
+                            ) : me?.role === "UCENIK" && r.status === "ODRZANA" ? (
+                              reviewedIds[r.rezervacijaId] ? (
                                 <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">
                                   Recenzija poslata
                                 </span>
@@ -441,10 +395,32 @@ export default function MyBookingsPage() {
                                 >
                                   Ostavi recenziju
                                 </Button>
-                              )}
-                            </div>
+                              )
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {me?.role === "UCENIK" && (
+                    <div className="mt-4 grid gap-3">
+                      {g.items.map(
+                        (r) =>
+                          r.status === "ODRZANA" &&
+                          reviewingId === r.rezervacijaId &&
+                          !reviewedIds[r.rezervacijaId] && (
+                            <div
+                              key={`review-${r.rezervacijaId}`}
+                              className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <span className="text-sm font-semibold text-slate-900">
+                                  Recenzija za termin {formatTime(r.vremeOd)} - {formatTime(r.vremeDo)}
+                                </span>
+                              </div>
 
-                            {reviewingId === r.rezervacijaId && !reviewedIds[r.rezervacijaId] && (
                               <div className="mt-3 grid gap-3">
                                 <label className="grid gap-2 text-sm font-medium text-slate-700">
                                   Ocena
@@ -523,10 +499,9 @@ export default function MyBookingsPage() {
                                   <p className="text-sm text-slate-700">{reviewMsg}</p>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        )
-                      ))}
+                            </div>
+                          )
+                      )}
                     </div>
                   )}
                 </div>

@@ -44,11 +44,27 @@ export async function DELETE(
     return NextResponse.json({ error: "Nemate pravo da brisete ovaj termin." }, { status: 403 });
   }
 
-  if (termin.status !== "SLOBODAN") {
-    return NextResponse.json(
-      { error: "Termin moze da se obrise samo ako je slobodan." },
-      { status: 409 }
+  const existingRez = await db
+    .select({
+      rezervacijaId: schema.rezervacija.rezervacijaId,
+      status: schema.rezervacija.status,
+    })
+    .from(schema.rezervacija)
+    .where(eq(schema.rezervacija.terminId, id));
+
+  if (existingRez.length > 0) {
+    const hasActiveOrHeld = existingRez.some(
+      (r) => r.status === "AKTIVNA"  //|| r.status === "ODRZANA"
     );
+    if (hasActiveOrHeld) {
+      return NextResponse.json(
+        { error: "Termin je rezervisan. Prvo morate da otkažete rezervaciju." },
+        { status: 409 }
+      );
+    }
+
+    // Sve rezervacije su otkazane: obrisi ih pa obrisi termin.
+    await db.delete(schema.rezervacija).where(eq(schema.rezervacija.terminId, id));
   }
 
   await db.delete(schema.termin).where(eq(schema.termin.terminId, id));

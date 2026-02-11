@@ -84,7 +84,6 @@ export default function FavoritesPage() {
           <p className="mt-2 text-sm text-slate-600">
             Lista tutora koje ste sačuvali kao omiljene.
           </p>
-
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
           <div className="mt-6">

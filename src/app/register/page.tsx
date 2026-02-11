@@ -15,7 +15,6 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
   const [role, setRole] = useState<Role>("UCENIK");
-
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,14 +32,17 @@ export default function RegisterPage() {
 
       const contentType = res.headers.get("content-type") || "";
       const data = contentType.includes("application/json")
-        ? await res.json()
-        : { error: await res.text() };
+        ? await res.json(): { error: await res.text() };
       if (!res.ok) {
         setError(data?.error || "Nešto nije okej...");
         return;
       }
 
-      router.push("/me");
+      if (role === "UCENIK") {
+        router.push("/tutors");
+      } else {
+        router.push("/me");
+      }
       router.refresh();
     } finally {
       setLoading(false);

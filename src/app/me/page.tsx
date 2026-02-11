@@ -67,6 +67,7 @@ export default function MePage() {
   const [langId, setLangId] = useState("");
   const [langLevel, setLangLevel] = useState<TutorLanguage["nivo"]>("B1");
   const [langMsg, setLangMsg] = useState<string | null>(null);
+  
   const [tutorStats, setTutorStats] = useState<{
     activeReservations: number;
     heldClasses: number;
@@ -80,7 +81,7 @@ export default function MePage() {
   } | null>(null);
 
   const [bedzevi, setBedzevi] = useState<Bedz[]>([]);
-
+//ucitavanje podataka o korisniku i njegovom profilu 
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/me");
@@ -118,6 +119,7 @@ export default function MePage() {
         } catch {
           setLanguages([]);
         }
+        //postavi podatke za statistiku
         try {
           const tRes = await fetch(`/api/termini?tutorId=${user.korisnikId}`);
           const tData = await tRes.json();
@@ -133,18 +135,6 @@ export default function MePage() {
           const activeReservations = flat.filter((r) => r.status === "AKTIVNA").length;
           const heldClasses = flat.filter((r) => r.status === "ODRZANA").length;
           let avgRating = data?.tutor?.prosecnaOcena ?? "0.00";
-          try {
-            const revRes = await fetch(`/api/recenzije?tutorId=${user.korisnikId}`);
-            const revData = await revRes.json();
-            const list: Array<{ ocena: number }> = revData?.recenzije ?? [];
-            if (list.length > 0) {
-              const avg =
-                list.reduce((sum, r) => sum + Number(r.ocena ?? 0), 0) / list.length;
-              avgRating = avg.toFixed(2);
-            }
-          } catch {
-            // fallback to stored avg
-          }
           setTutorStats({ activeReservations, heldClasses, avgRating });
         } catch {
           setTutorStats({ activeReservations: 0, heldClasses: 0, avgRating: "0.00" });
@@ -249,9 +239,8 @@ export default function MePage() {
     }
     setTutorLanguages((prev) => {
       const existing = prev.find((p) => p.jezikId === id);
-      if (existing) {
-        return prev.map((p) => (p.jezikId === id ? { ...p, nivo: langLevel } : p));
-      }
+      //ako je vec dodat, promeni nivo
+      if (existing) {return prev.map((p) => (p.jezikId === id ? { ...p, nivo: langLevel } : p));}
       return [...prev, { jezikId: id, naziv: lang.naziv, nivo: langLevel }];
     });
     setLangId("");

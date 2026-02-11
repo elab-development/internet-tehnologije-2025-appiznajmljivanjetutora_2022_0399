@@ -21,7 +21,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<"SVE" | UserRow["role"]>("SVE");
   const [statusFilter, setStatusFilter] = useState<"SVE" | UserRow["statusNaloga"]>("SVE");
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<number | null>(null); //za disabled stanje dugmadi dok se status menja
 
   useEffect(() => {
     (async () => {
@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
       <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm backdrop-blur">
         <h1 className="text-2xl font-semibold text-slate-900">Korisnici</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Pregled naloga i mogucnost suspendovanja.
+          Pregled naloga i mogućnost suspendovanja.
         </p>
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
@@ -143,22 +143,20 @@ export default function AdminUsersPage() {
                 <span className="text-right">Akcije</span>
               </div>
               {filtered.map((u, idx) => (
+                //za svaki red prikazujemo ime, email, ulogu, status i dugme za promenu statusa 
                 <div
                   key={u.korisnikId}
                   className={`grid grid-cols-[1.4fr_1.6fr_0.8fr_0.8fr_0.8fr] items-center px-4 py-3 text-sm ${
                     idx === filtered.length - 1 ? "" : "border-b border-slate-100"
                   }`}
                 >
-                  <span className="font-medium text-slate-900">
-                    {u.ime} {u.prezime}
-                  </span>
+                  <span className="font-medium text-slate-900">{u.ime} {u.prezime}</span>
                   <span className="text-slate-700">{u.email}</span>
                   <span className="text-slate-700">{u.role}</span>
                   <span className="text-slate-700">{u.statusNaloga}</span>
                   <div className="text-right">
-                    {u.role === "ADMIN" ? (
-                      <span className="text-xs text-slate-500">—</span>
-                    ) : (
+                    {u.role === "ADMIN" ? (<span className="text-xs text-slate-500">—</span>) 
+                    : (
                       <Button
                         variant={u.statusNaloga === "AKTIVAN" ? "danger" : "secondary"}
                         size="sm"

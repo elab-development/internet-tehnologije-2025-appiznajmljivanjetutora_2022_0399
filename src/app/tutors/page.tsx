@@ -71,6 +71,7 @@ export default function TutorsPage() {
     })();
   }, [me]);
 
+  //kesiranje query-ja za pretragu, da se ne salje zahtev na svaki klik
   const query = useMemo(() => {
     const p = new URLSearchParams();
     if (verified) p.set("verified", "true");
@@ -80,9 +81,9 @@ export default function TutorsPage() {
     return p.toString();
   }, [verified, maxPrice, languageId, level]);
 
+  //ucitavanje tutora na osnovu query-ja
   useEffect(() => {
     if (!me) return;
-
     (async () => {
       const res = await fetch(`/api/tutors${query ? `?${query}` : ""}`);
       const data = await res.json();
@@ -95,6 +96,7 @@ export default function TutorsPage() {
     })();
   }, [me, query]);
 
+  //salje zahtev za brisanje ili dodavanje iz favorita, u zavisnosti od trenutnog stanja
   async function toggleFavorite(tutorId: number) {
     setFavoriteError(null);
     const isFavorite = favoriteIds.has(tutorId);

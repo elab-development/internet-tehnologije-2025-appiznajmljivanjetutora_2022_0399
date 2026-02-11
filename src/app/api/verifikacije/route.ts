@@ -8,7 +8,7 @@ type CreateBody = {
   dokumentUrl: string;
 };
 
-//vrati sve zahteve za verifikaciju tutor profila, sa opcionalnim filterom po statusu (NOV, ODOBREN, ODBIJEN) 
+//vrati sve zahteve za verifikaciju sa opcionalnim filterom po statusu (NOV, ODOBREN, ODBIJEN) 
 //- samo za admina
 export async function GET(req: Request) {
   const auth = await getAuthPayload();

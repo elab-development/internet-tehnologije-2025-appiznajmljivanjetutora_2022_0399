@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/Button";
 
+type MeUser = { role: "UCENIK" | "TUTOR" | "ADMIN" };
+
 type Tutor = {
   tutorId: number;
   ime: string;
@@ -52,8 +54,8 @@ function formatTime(value: string) {
 
 function isFutureTerm(term: Termin) {
   const datePart = term.datum?.split("T")[0] ?? term.datum;
-  if (!datePart || !term.vremeDo) return true;
-  const endDateTime = new Date(`${datePart}T${term.vremeDo}`);
+  if (!datePart || !term.vremeOd) return true;
+  const endDateTime = new Date(`${datePart}T${term.vremeOd}`);
   if (Number.isNaN(endDateTime.getTime())) return true;
   return endDateTime.getTime() > Date.now();
 }
@@ -72,11 +74,28 @@ export default function TutorDetailsPage() {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [favoriteError, setFavoriteError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [me, setMe] = useState<MeUser | null>(null);
 
+    useEffect(() => {
+      (async () => {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+        if (!data?.user) {
+          router.replace("/login");
+          return;
+        }
+        if (data.user.role !== "UCENIK") {
+          router.replace("/me");
+          return;
+        }
+        setMe({ role: data.user.role });
+      })();
+    }, [router]);
+  
+    //ucitavanje tutora i jezika
   useEffect(() => {
     const id = params?.id;
-    if (!id) return;
-
+    if (!id ) return;
     (async () => {
       setLoading(true);
       const res = await fetch(`/api/tutors/${id}`);
@@ -87,6 +106,7 @@ export default function TutorDetailsPage() {
     })();
   }, [params]);
 
+  //ucitavanje recenzija
   useEffect(() => {
     const id = params?.id;
     if (!id) return;
@@ -101,9 +121,10 @@ export default function TutorDetailsPage() {
     })();
   }, [params]);
 
+  //ucitavanje da li je u favoritima
   useEffect(() => {
     const id = params?.id;
-    if (!id) return;
+    if (!id ) return;
     (async () => {
       try {
         const res = await fetch("/api/favoriti");
@@ -116,9 +137,10 @@ export default function TutorDetailsPage() {
     })();
   }, [params]);
 
+  //salje zahtev za brisanje ili dodavanje iz favorita, u zavisnosti od trenutnog stanja
   async function toggleFavorite() {
     const id = params?.id;
-    if (!id) return;
+    if (!id ) return;
     setFavoriteError(null);
     setFavoriteLoading(true);
     try {
@@ -138,9 +160,10 @@ export default function TutorDetailsPage() {
     }
   }
 
+  //vrati slobodne termine za ovog tutora, bez obzira na to da li su u pitanju buduci termini ili ne
   useEffect(() => {
     const id = params?.id;
-    if (!id) return;
+    if (!id ) return;
     (async () => {
       setTerminiLoading(true);
       setTerminiError(null);
@@ -157,8 +180,10 @@ export default function TutorDetailsPage() {
     })();
   }, [params]);
 
+  //filtrira samo buduce termine
   const visibleTermini = useMemo(() => termini.filter(isFutureTerm), [termini]);
 
+  //grupise termine po datumu
   const groupedTermini = useMemo(() => {
     if (visibleTermini.length === 0) return [];
     const map = new Map<string, Termin[]>();
@@ -173,8 +198,9 @@ export default function TutorDetailsPage() {
         items: [...items].sort((a, b) => a.vremeOd.localeCompare(b.vremeOd)),
       }))
       .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-  }, [termini]);
+  }, [visibleTermini]);
 
+  //posalji zahtev za rezervaciju termina
   async function reserveTermin(terminId: number) {
     setTerminiError(null);
     setTerminiSuccess(null);
@@ -188,10 +214,12 @@ export default function TutorDetailsPage() {
       setTerminiError(data?.error || "Greška pri rezervaciji.");
       return;
     }
+    //odmah ukloni rezervisani termin iz prikaza
     setTermini((prev) => prev.filter((t) => t.terminId !== terminId));
     setTerminiSuccess("Rezervacija uspešna.");
   }
 
+  //renderovanje
   if (loading) {
     return (
       <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">
@@ -221,12 +249,8 @@ export default function TutorDetailsPage() {
     );
   }
 
-  const ocenaLabel =
-    tutor.prosecnaOcena === "0.00" ||
-    tutor.prosecnaOcena === "0" ||
-    tutor.prosecnaOcena === "0.0"
-      ? "Nema ocena"
-      : tutor.prosecnaOcena;
+  const ocenaLabel = tutor.prosecnaOcena === "0.00" ||tutor.prosecnaOcena === "0" ||tutor.prosecnaOcena === "0.0"
+      ? "Nema ocena": tutor.prosecnaOcena;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(1200px_circle_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-sky-50 px-6 py-12">

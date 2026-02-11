@@ -57,14 +57,13 @@ export default function TutorCard({
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
-          onToggleFavorite?.();
+          onToggleFavorite?.(); //ako je funkcija prosleđena, pozovi je, inače ne radi ništa
         }}
         className={`absolute bottom-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-base font-semibold shadow-sm transition ${
           isFavorite
             ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
             : "border-red-200 bg-white text-red-500 hover:bg-red-50"
         }`}
-        aria-label={isFavorite ? "Ukloni iz favorita" : "Dodaj u favorite"}
         title={isFavorite ? "Ukloni iz favorita" : "Dodaj u favorite"}
       >
         {isFavorite ? "♥" : "♡"}

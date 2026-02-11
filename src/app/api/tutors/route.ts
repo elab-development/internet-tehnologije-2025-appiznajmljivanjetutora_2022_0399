@@ -10,7 +10,8 @@ type CreateBody = {
   verifikovan?: boolean;
 };
 
-//vrati listu tutora koji odgovaraju prosledjenim filterima (verifikovan, maxCena, jezik, nivo)
+//vrati listu tutora [koji odgovaraju prosledjenim filterima (verifikovan, maxCena, jezik, nivo)]
+//vrati max cenu po času među svim tutorima (koristi se za slider na frontend-u)
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
@@ -19,6 +20,7 @@ export async function GET(req: Request) {
   const languageId = searchParams.get("languageId");
   const levelParam = searchParams.get("level"); // A1..C2
   const levels = new Set<Level>(["A1", "A2", "B1", "B2", "C1", "C2"]);
+  //filtriranje se primenjuje samo ako je parametar validan, u suprotnom se ignoriše
   const level = levelParam && levels.has(levelParam as Level) ? (levelParam as Level) : null;
 
   const maxRow = await db

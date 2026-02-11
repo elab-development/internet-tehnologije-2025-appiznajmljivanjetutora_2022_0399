@@ -8,7 +8,9 @@ import Input from "@/components/Input";
 export default function LoginPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/me";
+  const next = params.get("next") || "/me"; 
+  //ako dolazi sa proxyja, vrati na /me,
+  //inače idi na /tutors ako je učenik ili /me ako nije (npr. admin)
 
   const [email, setEmail] = useState("");
   const [lozinka, setLozinka] = useState("");
@@ -16,7 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault(); //ne dozvoljavamo default submit ponašanje koje bi osvežilo stranicu
     setError(null);
     setLoading(true);
 
@@ -29,8 +31,7 @@ export default function LoginPage() {
 
       const contentType = res.headers.get("content-type") || "";
       const data = contentType.includes("application/json")
-        ? await res.json()
-        : { error: await res.text() };
+        ? await res.json() : { error: await res.text() };
       if (!res.ok) {
         setError(data?.error || "Nešto nije okej ... pokušaj ponovo");
         return;

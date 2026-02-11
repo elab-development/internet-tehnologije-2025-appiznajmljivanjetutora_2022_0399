@@ -8,8 +8,10 @@ type UpdateBody = Partial<{
   komentar: string | null;
 }>;
 //admin moze da obrise recenziju
-export async function DELETE( { params }: { params: { id: string } }) 
-{
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
@@ -18,7 +20,8 @@ export async function DELETE( { params }: { params: { id: string } })
     return NextResponse.json({ error: "Nemate pravo da obrisete recenziju." }, { status: 403 });
   }
 
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }

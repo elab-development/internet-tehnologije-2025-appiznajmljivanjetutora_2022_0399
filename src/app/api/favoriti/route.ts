@@ -6,7 +6,7 @@ import { getAuthPayload } from "@/lib/auth-server";
 type CreateBody = {tutorId: number;};
 type DeleteBody = {tutorId: number;};
 
-//vraca listu svih favorita za prijavljenog učenika
+//vraca listu id-jeva svih favorita za prijavljenog učenika
 export async function GET() {
   const auth = await getAuthPayload();
   if (!auth) {

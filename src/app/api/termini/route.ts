@@ -11,36 +11,30 @@ type CreateBody = {
   status?: "SLOBODAN" | "REZERVISAN" | "OTKAZAN";
 };
 
-//get metoda vraca termine koji odgovaraju prosledjenim parametrima (tutorId, datum, status)
-//pozivaju je 
-//ucenici:
-//- da vide koje termine imaju rezervisane 
-//- da vide slobodne termine tutora
-//tutori 
-//- da vide svoje defisane termine 
 export async function GET(req: Request) {
+  //azuriraj statuse termina na osnovu rezervacija
+
+  //ako postoji aktivna rezervacija, termin je rezervisan
   await db.execute(sql`
     UPDATE termin t
     JOIN rezervacija r ON r.termin_id = t.termin_id
     SET t.status_termina = 'REZERVISAN'
     WHERE t.status_termina = 'SLOBODAN'
+      AND r.status_rezervacije = 'AKTIVNA'
+  `);
+    //ako postoji su sve rezervacije otkazane, termin je slobodan 
+  await db.execute(sql`
+    UPDATE termin t
+    JOIN rezervacija r ON r.termin_id = t.termin_id
+    SET t.status_termina = 'SLOBODAN'
+    WHERE t.status_termina != 'OTKAZAN'
+      AND r.status_rezervacije = 'OTKAZANA'
   `);
 
   const { searchParams } = new URL(req.url);
   const tutorId = searchParams.get("tutorId");
-  const datum = searchParams.get("datum");
-  const statusParam = searchParams.get("status");
-  const statuses = new Set(["SLOBODAN", "REZERVISAN", "OTKAZAN"]);
-  const status = statusParam && statuses.has(statusParam) ? statusParam : null;
-
-  const parsedDatum =
-    datum && !Number.isNaN(new Date(datum).getTime()) ? new Date(datum) : null;
-
   const where = and(
-    tutorId ? eq(schema.termin.tutorId, Number(tutorId)) : undefined,
-    parsedDatum ? eq(schema.termin.datum, parsedDatum) : undefined,
-    status ? eq(schema.termin.status, status as "SLOBODAN" | "REZERVISAN" | "OTKAZAN") : undefined
-  );
+    tutorId ? eq(schema.termin.tutorId, Number(tutorId)) : undefined);
 
   const baseSelect = {
     terminId: schema.termin.terminId,
@@ -51,17 +45,9 @@ export async function GET(req: Request) {
     status: schema.termin.status,
   };
 
-  //vrati samo slobodne termine ako je status "SLOBODAN",
-  //a ako je status "REZERVISAN" ili "OTKAZAN",
-  //vrati sve termine koji odgovaraju ostalim parametrima
+  //vrati sve termine koji odgovaraju  parametrima
   const termini =
-    status === "SLOBODAN"
-      ? await db
-          .select(baseSelect)
-          .from(schema.termin)
-          .leftJoin(schema.rezervacija, eq(schema.rezervacija.terminId, schema.termin.terminId))
-          .where(and(where, isNull(schema.rezervacija.rezervacijaId)))
-      : await db.select(baseSelect).from(schema.termin).where(where);
+      await db.select(baseSelect).from(schema.termin).where(where);
 
   return NextResponse.json({ termini }, { status: 200 });
 }

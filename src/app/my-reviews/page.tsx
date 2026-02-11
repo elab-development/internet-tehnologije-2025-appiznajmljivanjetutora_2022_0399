@@ -47,7 +47,7 @@ export default function MyReviewsPage() {
         router.replace("/login");
         return;
       }
-      if (data.user.role !== "UCENIK" && data.user.role !== "TUTOR") {
+      if (data.user.role !== "TUTOR") {
         router.replace("/me");
         return;
       }
@@ -61,11 +61,7 @@ export default function MyReviewsPage() {
       setLoading(true);
       setError(null);
       try {
-        const query =
-          me.role === "TUTOR"
-            ? `/api/recenzije?tutorId=${me.korisnikId}`
-            : `/api/recenzije?ucenikId=${me.korisnikId}`;
-        const res = await fetch(query);
+        const res = await fetch(`/api/recenzije?tutorId=${me.korisnikId}`);
         const data = await res.json();
         setRows(data?.recenzije ?? []);
       } catch {
@@ -107,19 +103,10 @@ export default function MyReviewsPage() {
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-slate-900">
-                      {me?.role === "TUTOR" ? (
-                        <span>
+                         <span>
                           {r.ucenikIme} {r.ucenikPrezime}
                         </span>
-                      ) : (
-                        <Link
-                          className="text-blue-700 hover:text-blue-800"
-                          href={`/tutors/${r.tutorId}`}
-                        >
-                          {r.tutorIme} {r.tutorPrezime}
-                        </Link>
-                      )}
-                    </div>
+                     </div>
                     <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">
                       {r.ocena}/5
                     </span>

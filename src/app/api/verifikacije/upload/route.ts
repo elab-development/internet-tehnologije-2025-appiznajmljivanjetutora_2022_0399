@@ -14,8 +14,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nemate pravo na upload." }, { status: 403 });
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
+  const formData = await req.formData();//cita multipart/form-data 
+  const file = formData.get("file");//izvlači fajl
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Fajl je obavezan." }, { status: 400 });
   }
@@ -25,8 +25,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Dozvoljeni su JPG, PNG ili PDF." }, { status: 400 });
   }
 
-  const ext = path.extname(file.name) || ".bin";
+  const ext = path.extname(file.name) || ".bin";//cita ekstenziju fajla
   const filename = `${crypto.randomUUID()}${ext}`;
+
   const uploadsDir = path.join(process.cwd(), "public", "uploads", "verification");
   await mkdir(uploadsDir, { recursive: true });
 

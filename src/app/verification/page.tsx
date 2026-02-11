@@ -6,7 +6,6 @@ import Button from "@/components/Button";
 
 type MeUser = { korisnikId: number; role: "UCENIK" | "TUTOR" | "ADMIN" };
 type TutorProfile = { verifikovan: boolean };
-
 type HistoryItem = {
   zahtevId: number;
   status: string;
@@ -59,7 +58,7 @@ export default function VerificationPage() {
       if (profileData?.tutor) {
         setTutorProfile({ verifikovan: profileData.tutor.verifikovan });
       }
-
+      //vrati poslednji zahtev za verifikaciju ovog korisnika, ako postoji
       const vRes = await fetch("/api/verifikacije/moj");
       const vData = await vRes.json();
       if (vData?.zahtev) {
@@ -69,13 +68,16 @@ export default function VerificationPage() {
         setVerifStatus(null);
         setVerifDocUrl("");
       }
-
+      //vrati istoriju zahteva za verifikaciju ovog korisnika
       const hRes = await fetch("/api/verifikacije/istorija");
       const hData = await hRes.json();
       setVerifHistory(hData?.zahtevi ?? []);
     })();
   }, [user]);
 
+  //posalji zahtev za upload dokumenta, 
+  // vrati URL i sacuvaj ga u state 
+  // da bi mogao da se posalje zajedno sa zahtevom za verifikaciju
   async function uploadVerificationFile() {
     setVerifMsg(null);
     if (!verifFile) {
@@ -190,7 +192,7 @@ export default function VerificationPage() {
           )}
           {verifStatus === "NOV" && (
             <p className="text-sm text-slate-600">
-              Zahtev je već podnet. Nije moguće poslati novi dok se ne donese odluka.
+              Zahtev je podnet. Nije moguće poslati novi dok se ne donese odluka.
             </p>
           )}
 

@@ -21,22 +21,21 @@ function formatDate(value: string) {
   if (!y || !m || !d) return value;
   return `${d}.${m}.${y}`;
 }
-
+//za proveru preklapanja termina, pretvara vreme u minute od pocetka dana
 function timeToMinutes(value: string) {
   const [h, m] = value.split(":").map((v) => Number(v));
   if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN;
   return h * 60 + m;
 }
-
 function formatTime(value: string) {
   if (!value) return value;
   return value.slice(0, 5);
 }
-
+// proverava da li je termin u buducnosti, na osnovu datuma i vremena pocetka termina
 function isFutureTerm(term: Termin) {
   const datePart = term.datum?.split("T")[0] ?? term.datum;
-  if (!datePart || !term.vremeDo) return true;
-  const endDateTime = new Date(`${datePart}T${term.vremeDo}`);
+  if (!datePart || !term.vremeOd) return true;
+  const endDateTime = new Date(`${datePart}T${term.vremeOd}`);
   if (Number.isNaN(endDateTime.getTime())) return true;
   return endDateTime.getTime() > Date.now();
 }

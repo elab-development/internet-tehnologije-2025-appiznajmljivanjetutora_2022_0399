@@ -9,7 +9,7 @@ type CreateBody = {
   komentar?: string;
 };
 
-//vraca recenzije na osnovu različitih parametara (rezervacijaId, tutorId, ucenikId)
+//vraca recenzije na osnovu različitih parametara ( tutorId, ucenikId)
 //omogucava da se vrate
 //1) recenzije koje je ostavio određeni učenik (ako se prosledi ucenikId)
 //2) recenzije koje su ostavljene za određenog tutora (ako se prosledi tutorId)
@@ -69,7 +69,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ recenzije }, { status: 200 });
       //}
   }
-
 
 //unos nove recenzije za odrzanu rezervaciju
 //azuriranje prosecne ocene tutora nakon unosa nove recenzije

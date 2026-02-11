@@ -3,9 +3,9 @@ import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
 
-type UpdateBody = Partial<{
-  status: "AKTIVNA" | "OTKAZANA" | "ODRZANA";
-}>;
+type UpdateBody = {
+  status: "OTKAZANA";
+};
 //otkazivanje rezervacije je moguce samo ako je trenutni status "AKTIVNA"
 //ili ako je do pocetka termina ostalo vise od 24h
 export async function PUT(
@@ -24,12 +24,12 @@ export async function PUT(
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
   const body = (await req.json()) as UpdateBody;
-  if (!body || Object.keys(body).length === 0) {
-    return NextResponse.json({ error: "Nema podataka za izmenu." }, { status: 400 });
+  if (!body?.status || body.status !== "OTKAZANA") {
+    return NextResponse.json({ error: "Status mora biti OTKAZANA." }, { status: 400 });
   }
 
-  //proveri da li rezervacija postoji i da li je korisnik ima pravo da je menja
-  if (body.status === "OTKAZANA") {
+  //proveri da li rezervacija postoji i da li je vec zavrsena ili otkazana
+  //ako je rezervacija vec zavrsena ili otkazana, nije moguce je ponovo otkazati
     const rez = await db
       .select({
         rezervacijaId: schema.rezervacija.rezervacijaId,
@@ -43,7 +43,6 @@ export async function PUT(
       .from(schema.rezervacija)
       .innerJoin(schema.termin, eq(schema.termin.terminId, schema.rezervacija.terminId))
       .where(eq(schema.rezervacija.rezervacijaId, id));
-
     const current = rez[0];
     if (!current) {
       return NextResponse.json({ error: "Rezervacija ne postoji." }, { status: 404 });
@@ -98,27 +97,17 @@ export async function PUT(
         { status: 409 }
       );
     }
-  }
-  //azuriraj rezervaciju i ako je status postavljen na "OTKAZANA", azuriraj 
-  //i status termina na "OTKAZAN"
+  //azuriraj rezervaciju na "OTKAZANA",
+  //i status termina na "SLOBODAN"
   await db
     .update(schema.rezervacija)
-    .set(body)
+    .set({ status: "OTKAZANA" })
     .where(eq(schema.rezervacija.rezervacijaId, id));
 
-  if (body.status === "OTKAZANA") {
-    const rez = await db.query.rezervacija.findFirst({
-      where: eq(schema.rezervacija.rezervacijaId, id),
-      columns: { terminId: true },
-    });
-    if (rez?.terminId) {
-      await db
-        .update(schema.termin)
-        .set({ status: "OTKAZAN" })
-        .where(eq(schema.termin.terminId, rez.terminId));
-    }
-  }
+    await db
+      .update(schema.termin)
+      .set({ status: "SLOBODAN" })
+      .where(eq(schema.termin.terminId, current.terminId));
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }
-

@@ -8,7 +8,6 @@ type CreateBody = {
   ucenikId?: number;
   status?: "AKTIVNA" | "OTKAZANA" | "ODRZANA";
 };
-type Status = "AKTIVNA" | "OTKAZANA" | "ODRZANA";
 
 
 export async function GET(req: Request) {
@@ -23,20 +22,14 @@ export async function GET(req: Request) {
       AND TIMESTAMP(t.datum, t.vreme_do) < NOW()
   `);
 
-  //vrati sve rezervacije koje odgovaraju prosledjenim 
-  //parametrima (ucenikId, terminId, status)
+  //vrati rezervacije za prosledjeni terminId
   const { searchParams } = new URL(req.url);
-  const ucenikId = searchParams.get("ucenikId");
   const terminId = searchParams.get("terminId");
-  const statusParam = searchParams.get("status");
-  const statuses = new Set<Status>(["AKTIVNA", "OTKAZANA", "ODRZANA"]);
-  const status = statusParam && statuses.has(statusParam as Status) ? (statusParam as Status) : null;
+  if (!terminId) {
+    return NextResponse.json({ error: "Termin ID je obavezan." }, { status: 400 });
+  }
 
-  const where = and(
-    ucenikId ? eq(schema.rezervacija.ucenikId, Number(ucenikId)) : undefined,
-    terminId ? eq(schema.rezervacija.terminId, Number(terminId)) : undefined,
-    status ? eq(schema.rezervacija.status, status) : undefined
-  );
+  const where = eq(schema.rezervacija.terminId, Number(terminId));
 
   const rezervacije = await db
     .select({
@@ -90,7 +83,7 @@ export async function POST(req: Request) {
         throw { status: 404, message: "Termin ne postoji." };
       }
       //dozvoli ponovnu rezervaciju ako je prethodna otkazana
-      if (termin[0].status !== "SLOBODAN" && termin[0].status !== "OTKAZAN") {
+      if (termin[0].status !== "SLOBODAN") {
         throw { status: 409, message: "Termin nije slobodan." };
       }
       //zakljucaj rezervacije za update 

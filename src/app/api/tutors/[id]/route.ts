@@ -68,7 +68,7 @@ export async function PUT(
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }
 
-  if (auth.role !== "TUTOR" && auth.korisnikId !== id) {
+  if (auth.role !== "TUTOR" || auth.korisnikId !== id) {
     return NextResponse.json({ error: "Nemate pravo da menjate profil." }, { status: 403 });
   }
 
@@ -88,7 +88,7 @@ export async function PUT(
     await db.delete(schema.tutorJezik).where(eq(schema.tutorJezik.tutorId, id));
     if (body.languages.length > 0) {
       await db.insert(schema.tutorJezik).values(
-        body.languages.map((l) => ({
+        body.languages.map((l) => ({ //unwind jezik,nivo
           tutorId: id,
           jezikId: l.jezikId,
           nivo: l.nivo,

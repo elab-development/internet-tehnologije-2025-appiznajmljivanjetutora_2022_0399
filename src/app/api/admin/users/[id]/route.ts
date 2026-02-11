@@ -6,8 +6,7 @@ import { getAuthPayload } from "@/lib/auth-server";
 type UpdateBody = {statusNaloga: "AKTIVAN" | "BLOKIRAN";};
 
 //omogućava adminu da promeni status naloga korisnika (AKTIVAN ili BLOKIRAN)
-export async function PUT( req: Request,{ params }: { params: { id: string } })
- {
+export async function PUT(req: Request,{ params }: { params: Promise<{ id: string }> }) {
   const auth = await getAuthPayload();
   if (!auth) {
     return NextResponse.json({ error: "Niste prijavljeni." }, { status: 401 });
@@ -17,7 +16,8 @@ export async function PUT( req: Request,{ params }: { params: { id: string } })
   }
 
   //id korisnika nad kojim se vrši promena statusa se dobija iz URL parametra
-  const id = Number(params.id);
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   if (!id) {
     return NextResponse.json({ error: "Neispravan ID." }, { status: 400 });
   }

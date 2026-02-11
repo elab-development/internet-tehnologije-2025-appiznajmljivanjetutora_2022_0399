@@ -31,9 +31,7 @@ export default function VerificationsPage() {
   const [items, setItems] = useState<Verification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"SVE" | Verification["status"]>(
-    "NOV"
-  );
+  const [statusFilter, setStatusFilter] = useState<"SVE" | Verification["status"]>("NOV");
   const [actingId, setActingId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -92,8 +90,7 @@ export default function VerificationsPage() {
         setError(data?.error || "Greška pri ažuriranju.");
         return;
       }
-      setItems((prev) =>
-        prev.map((x) =>
+      setItems((prev) =>prev.map((x) =>
           x.zahtevId === id ? { ...x, status, datumOdluke: new Date().toISOString() } : x
         )
       );
