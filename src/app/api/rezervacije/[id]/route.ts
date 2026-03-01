@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
+import {
+  deleteGoogleCalendarEvent,
+  getReservationContext,
+  sendReservationCanceledEmails,
+} from "@/lib/booking-integration";
 
 type UpdateBody = {
   status: "OTKAZANA";
@@ -36,6 +41,7 @@ export async function PUT(
         status: schema.rezervacija.status,
         ucenikId: schema.rezervacija.ucenikId,
         terminId: schema.rezervacija.terminId,
+        googleCalendarEventId: schema.rezervacija.googleCalendarEventId,
         datum: schema.termin.datum,
         vremeOd: schema.termin.vremeOd,
         tutorId: schema.termin.tutorId,
@@ -101,7 +107,11 @@ export async function PUT(
   //i status termina na "SLOBODAN"
   await db
     .update(schema.rezervacija)
-    .set({ status: "OTKAZANA" })
+    .set({
+      status: "OTKAZANA",
+      googleCalendarEventId: null,
+      googleCalendarHtmlLink: null,
+    })
     .where(eq(schema.rezervacija.rezervacijaId, id));
 
     await db
@@ -109,5 +119,22 @@ export async function PUT(
       .set({ status: "SLOBODAN" })
       .where(eq(schema.termin.terminId, current.terminId));
 
-  return NextResponse.json({ ok: true }, { status: 200 });
+  const warnings: string[] = [];
+  const reservationContext = await getReservationContext(id);
+
+  try {
+    await deleteGoogleCalendarEvent(current.googleCalendarEventId);
+  } catch {
+    warnings.push("Google Calendar dogadjaj nije obrisan.");
+  }
+
+  if (reservationContext) {
+    try {
+      await sendReservationCanceledEmails(reservationContext);
+    } catch {
+      warnings.push("Email notifikacije nisu poslate.");
+    }
+  }
+
+  return NextResponse.json({ ok: true, warnings }, { status: 200 });
 }

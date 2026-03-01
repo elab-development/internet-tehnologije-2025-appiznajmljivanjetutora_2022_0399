@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
 import { and, eq, sql } from "drizzle-orm";
 import { getAuthPayload } from "@/lib/auth-server";
+import {
+  createGoogleCalendarEvent,
+  getReservationContext,
+  sendReservationCreatedEmails,
+} from "@/lib/booking-integration";
 
 type CreateBody = {
   terminId: number;
@@ -87,6 +92,7 @@ export async function POST(req: Request) {
   }
   //transakcija koja osigurava da se rezervacija kreira samo ako je termin slobodan, 
   //i da se status termina azurira na "REZERVISAN"
+  let rezervacijaId: number | null = null;
   try {
     await db.transaction(async (tx) => {
       //zakljucaj termin za update kako bi izbegli race-condtions
@@ -123,8 +129,11 @@ export async function POST(req: Request) {
             .set({
               ucenikId,
               status: body.status ?? "AKTIVNA",
+              googleCalendarEventId: null,
+              googleCalendarHtmlLink: null,
             })
             .where(eq(schema.rezervacija.rezervacijaId, existing[0].rezervacijaId));
+          rezervacijaId = existing[0].rezervacijaId;
           //azuriraj status termina na "REZERVISAN"
           await tx
             .update(schema.termin)
@@ -163,6 +172,50 @@ export async function POST(req: Request) {
     throw err;
   }
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  if (!rezervacijaId) {
+    const created = await db
+      .select({
+        rezervacijaId: schema.rezervacija.rezervacijaId,
+      })
+      .from(schema.rezervacija)
+      .where(eq(schema.rezervacija.terminId, body.terminId));
+
+    rezervacijaId = created[0]?.rezervacijaId ?? null;
+  }
+
+  const warnings: string[] = [];
+
+  if (rezervacijaId) {
+    const reservationContext = await getReservationContext(rezervacijaId);
+
+    if (reservationContext) {
+      let calendarLink: string | null = null;
+
+      try {
+        const calendarEvent = await createGoogleCalendarEvent(reservationContext);
+        if (calendarEvent) {
+          calendarLink = calendarEvent.htmlLink;
+
+          await db
+            .update(schema.rezervacija)
+            .set({
+              googleCalendarEventId: calendarEvent.eventId,
+              googleCalendarHtmlLink: calendarEvent.htmlLink,
+            })
+            .where(eq(schema.rezervacija.rezervacijaId, rezervacijaId));
+        }
+      } catch {
+        warnings.push("Google Calendar dogadjaj nije kreiran.");
+      }
+
+      try {
+        await sendReservationCreatedEmails(reservationContext, calendarLink);
+      } catch {
+        warnings.push("Email notifikacije nisu poslate.");
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, warnings }, { status: 201 });
 }
 
