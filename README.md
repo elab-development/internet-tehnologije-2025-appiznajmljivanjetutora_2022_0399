@@ -23,6 +23,9 @@ Web aplikacija za povezivanje ucenika i tutora jezika. Omogucava registraciju i 
 - Verifikacije tutora: slanje zahteva i admin obrada
 - Bedzevi za ucenike
 - Admin paneli za korisnike i recenzije
+- Vizualizacija statistike po jezicima preko Google Charts
+- REST Countries API za prikaz zemalja povezanih sa jezicima koje tutor predaje
+- Frankfurter API za kursnu listu i uporedni prikaz cena casa u drugim valutama
 
 ## Pokretanje projekta (lokalno)
 
