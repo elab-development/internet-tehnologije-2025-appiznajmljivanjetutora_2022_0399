@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
+import AdminLanguageChart from "@/components/AdminLanguageChart";
 
 type User = {
   korisnikId: number;
@@ -516,6 +517,8 @@ export default function MePage() {
               </div>
             </div>
           </div>
+
+          <AdminLanguageChart />
         </div>
       )}
     </main>
