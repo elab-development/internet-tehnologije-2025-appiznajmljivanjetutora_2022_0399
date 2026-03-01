@@ -25,7 +25,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Dozvoljeni su JPG, PNG ili PDF." }, { status: 400 });
   }
 
-  const ext = path.extname(file.name) || ".bin";//cita ekstenziju fajla
+  const maxBytes = 5 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    return NextResponse.json(
+      { error: "Fajl je prevelik. Maksimalna velicina je 5MB." },
+      { status: 400 }
+    );
+  }
+
+  const ext = path.extname(file.name).toLowerCase() || ".bin";//cita ekstenziju fajla
+  const allowedExtensions = new Set([".jpg", ".jpeg", ".png", ".pdf"]);
+  if (!allowedExtensions.has(ext)) {
+    return NextResponse.json({ error: "Ekstenzija fajla nije dozvoljena." }, { status: 400 });
+  }
+
   const filename = `${crypto.randomUUID()}${ext}`;
 
   const uploadsDir = path.join(process.cwd(), "public", "uploads", "verification");
