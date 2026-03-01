@@ -18,6 +18,8 @@ Web aplikacija za povezivanje ucenika i tutora jezika. Omogucava registraciju i 
 - Uloge: `UCENIK`, `TUTOR`, `ADMIN`
 - Tutor katalog: pretraga/listanje tutora, detalj tutora
 - Termini i rezervacije: kreiranje termina, rezervisanje, otkazivanje i pracenje
+- Email notifikacije za kreiranje i otkazivanje rezervacija preko Resend API-ja
+- Google Calendar integracija za automatsko kreiranje i brisanje dogadjaja za rezervisan cas
 - Recenzije: kreiranje i moderacija recenzija
 - Favoriti: cuvanje omiljenih tutora
 - Verifikacije tutora: slanje zahteva i admin obrada
@@ -43,8 +45,13 @@ docker compose up -d
 Kreiraj `.env` (ako vec ne postoji) sa sledecim vrednostima:
 
 ```env
-DATABASE_URL="mysql://app:app@localhost:3306/tutor_app"
+DATABASE_URL="mysql://app:app@localhost:3307/tutor_app"
 JWT_SECRET="promeni_ovaj_jak_tajni_kljuc"
+RESEND_API_KEY="re_xxxxxxxxx"
+RESEND_FROM_EMAIL="onboarding@resend.dev"
+GOOGLE_CALENDAR_ID="vas_kalendar_id"
+GOOGLE_SERVICE_ACCOUNT_EMAIL="service-account@project-id.iam.gserviceaccount.com"
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
 ### 4. Migracije i seed
@@ -108,6 +115,21 @@ API rute su pod `src/app/api` i obuhvataju:
 - `favoriti` (`/api/favoriti`)
 - `verifikacije` (`/api/verifikacije`, `/api/verifikacije/[id]`, `/api/verifikacije/istorija`, `/api/verifikacije/moj`, `/api/verifikacije/upload`)
 - `admin/users` (`/api/admin/users`, `/api/admin/users/[id]`)
+
+## Spoljne integracije
+
+- `Resend API` se koristi za slanje email obavestenja kada se rezervacija kreira ili otkaze
+- `Google Calendar API` se koristi za automatsko kreiranje i brisanje calendar event-a za rezervisani cas
+- Ako API kljucevi nisu postavljeni, aplikacija i dalje radi normalno, samo bez slanja spoljasnjih notifikacija
+
+## Napomena za Google Calendar
+
+Za service account pristup potrebno je:
+
+1. kreirati Google Cloud service account
+2. omoguciti Google Calendar API
+3. podeliti ciljani kalendar sa service account email adresom
+4. upisati `GOOGLE_CALENDAR_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL` i `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` u `.env`
 
 ## Struktura projekta
 
