@@ -9,9 +9,69 @@ services:
       MYSQL_USER: app
       MYSQL_PASSWORD: app
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tutor_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      app-init:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mysql://app:app@db:3306/tutor_app
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3001:3000"
+
+  app-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tools
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mysql://app:app@db:3306/tutor_app
+    command:
+      [
+        "sh",
+        "-lc",
+        "until npm run db:push; do sleep 3; done; npm run db:seed",
+      ]
+    restart: "no"
+
+  app-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tools
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mysql://app:app@db:3306/tutor_app
 
 volumes:
   db_data:
