@@ -4,7 +4,13 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
-//omogući tutorima da uploaduju dokumente za verifikaciju svog profila (npr. diplomu ili sertifikat)
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_BY_MIME: Record<string, string[]> = {
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "application/pdf": [".pdf"],
+};
+
 export async function POST(req: Request) {
   const auth = await getAuthPayload();
   if (!auth) {
@@ -14,20 +20,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nemate pravo na upload." }, { status: 403 });
   }
 
-  const formData = await req.formData();//cita multipart/form-data 
-  const file = formData.get("file");//izvlači fajl
+  const formData = await req.formData();
+  const file = formData.get("file");
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "Fajl je obavezan." }, { status: 400 });
   }
 
-  const allowed = new Set(["image/jpeg", "image/png", "application/pdf"]);
-  if (!allowed.has(file.type)) {
+  const allowedExtensions = ALLOWED_BY_MIME[file.type];
+  const originalExt = path.extname(file.name).toLowerCase();
+  if (!allowedExtensions || !allowedExtensions.includes(originalExt)) {
     return NextResponse.json({ error: "Dozvoljeni su JPG, PNG ili PDF." }, { status: 400 });
   }
+  if (file.size <= 0) {
+    return NextResponse.json({ error: "Fajl je prazan." }, { status: 400 });
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return NextResponse.json({ error: "Maksimalna velicina fajla je 5MB." }, { status: 413 });
+  }
 
-  const ext = path.extname(file.name) || ".bin";//cita ekstenziju fajla
-  const filename = `${crypto.randomUUID()}${ext}`;
-
+  const filename = `${crypto.randomUUID()}${allowedExtensions[0]}`;
   const uploadsDir = path.join(process.cwd(), "public", "uploads", "verification");
   await mkdir(uploadsDir, { recursive: true });
 

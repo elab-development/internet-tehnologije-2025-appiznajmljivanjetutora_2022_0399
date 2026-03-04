@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { isMutationMethod, passesCsrfProtection, withSecurityHeaders } from "@/lib/security";
 
 const AUTH_COOKIE = "auth_token";
 
-//preusmerava na login ako nema tokena, ili ako je token nevalidan (samo za API mutacije), 
-//ili ako korisnik bez role UCENIK pokusa da pristupi /tutors stranici
+function nextWithSecurityHeaders() {
+  return withSecurityHeaders(NextResponse.next());
+}
+
 function redirectToLogin(req: NextRequest) {
   const url = req.nextUrl.clone();
   url.pathname = "/login";
-  return NextResponse.redirect(url);
+  return withSecurityHeaders(NextResponse.redirect(url));
 }
 
-//baca izuzetak ako token nije validan, cita samo rolu iz tokena 
 async function readRoleFromToken(token: string) {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret");
   const { payload } = await jwtVerify(token, secret);
@@ -21,34 +23,48 @@ async function readRoleFromToken(token: string) {
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isPublicPage = pathname === "/login" || pathname === "/register";
+  const isPublicPage = pathname === "/login" || pathname === "/register" || pathname === "/swagger";
   const isAuthApi = pathname.startsWith("/api/auth/");
-  const isPublicAsset = pathname.startsWith("/_next/") || pathname === "/favicon.ico";
+  const isOpenApiSpec = pathname === "/api/openapi";
+  const isPublicAsset =
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/swagger-ui.html" ||
+    pathname.startsWith("/uploads/");
   const isApi = pathname.startsWith("/api/");
-  const isMutation = req.method !== "GET" && req.method !== "HEAD" && req.method !== "OPTIONS";
+  const isMutation = isMutationMethod(req.method);
 
-  //za javne stranice, javne API-je i statičke resurse ne proverava token
-  if (isPublicAsset || isAuthApi || isPublicPage) {
-    return NextResponse.next();
+  if (isPublicAsset || isPublicPage || isOpenApiSpec) {
+    return nextWithSecurityHeaders();
   }
 
- // Ako korisnik nije prijavljen, preusmeri na login
+  if (isApi && isMutation && !passesCsrfProtection(req)) {
+    return withSecurityHeaders(
+      NextResponse.json({ error: "CSRF provera nije prosla." }, { status: 403 })
+    );
+  }
+
+  if (isAuthApi) {
+    return nextWithSecurityHeaders();
+  }
+
   const token = req.cookies.get(AUTH_COOKIE)?.value;
   if (!token) return redirectToLogin(req);
 
-  // Za API mutacije uvek traži validan token
   if (isApi && isMutation) {
     try {
       await readRoleFromToken(token);
-      return NextResponse.next();
+      return nextWithSecurityHeaders();
     } catch {
-      return NextResponse.json({ error: "Nevalidan token." }, { status: 401 });
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Nevalidan token." }, { status: 401 })
+      );
     }
   }
 
-  return NextResponse.next();
+  return nextWithSecurityHeaders();
 }
-//proxy presrece na svim rutama osim onih koje su javne ili statičke
+
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

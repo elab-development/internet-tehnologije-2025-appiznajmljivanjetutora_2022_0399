@@ -4,6 +4,7 @@ import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signToken, AUTH_COOKIE } from "@/lib/auth";
+import { authCookieOptions } from "@/lib/cookie-options";
 
 type Body = {
   ime: string;
@@ -61,12 +62,6 @@ export async function POST(req: Request) {
     { korisnikId, role: body.role, email: body.email, ime: body.ime, prezime: body.prezime },
     { status: 201 }
   );
-  res.cookies.set(AUTH_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false, // stavi true kad bude HTTPS/production
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  res.cookies.set(AUTH_COOKIE, token, authCookieOptions);
   return res;
 }

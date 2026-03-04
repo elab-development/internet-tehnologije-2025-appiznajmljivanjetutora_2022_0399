@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signToken, AUTH_COOKIE } from "@/lib/auth";
 import { getRoleForUser } from "@/lib/role";
+import { authCookieOptions } from "@/lib/cookie-options";
 
 type Body = { email: string; lozinka: string };
 
@@ -38,13 +39,7 @@ export async function POST(req: Request) {
     { status: 200 }
   );
 
-  res.cookies.set(AUTH_COOKIE, token, {
-    httpOnly: true,  
-    sameSite: "lax",   
-    secure: false,   
-    path: "/",    
-    maxAge: 60 * 60 * 24 * 7,   
-  });
+  res.cookies.set(AUTH_COOKIE, token, authCookieOptions);
 
   return res; // vraćamo odgovor sa postavljenim cookie-jem
 }
