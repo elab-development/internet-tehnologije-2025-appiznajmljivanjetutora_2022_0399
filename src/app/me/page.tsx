@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
+import AdminLanguageChart from "@/components/AdminLanguageChart";
 
 type User = {
   korisnikId: number;
@@ -514,6 +515,16 @@ export default function MePage() {
               <div className="text-xl font-semibold text-slate-900">
                 {adminStats?.pendingVerifications ?? 0}
               </div>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-base font-semibold text-slate-900">Jezici tutora (vizuelizacija)</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Podaci koriste REST Countries i Frankfurter API.
+            </p>
+            <div className="mt-3">
+              <AdminLanguageChart />
             </div>
           </div>
         </div>
