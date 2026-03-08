@@ -184,6 +184,9 @@ export const rezervacija = mysqlTable(
     status: mysqlEnum("status_rezervacije", ["AKTIVNA", "OTKAZANA", "ODRZANA"])
       .notNull()
       .default("AKTIVNA"),
+
+    googleCalendarEventId: varchar("google_calendar_event_id", { length: 255 }),
+    googleCalendarHtmlLink: varchar("google_calendar_html_link", { length: 255 }),
   },
   (t) => ({
     uxTermin: uniqueIndex("ux_rezervacija_termin").on(t.terminId),

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: tutor-booking-app
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /login
+    envVars:
+      - key: NODE_ENV
+        value: production

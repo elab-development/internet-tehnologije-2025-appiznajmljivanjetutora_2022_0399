@@ -1,6 +1,6 @@
 # Tutor Booking App
 
-Web aplikacija za povezivanje ucenika i tutora jezika. Omogucava registraciju i prijavu korisnika, upravljanje profilima, termine, rezervacije, recenzije, favorite i administraciju korisnika/verifikacija.
+Web aplikacija za povezivanje ucenika i tutora jezika.
 
 ## Tehnologije
 
@@ -10,21 +10,20 @@ Web aplikacija za povezivanje ucenika i tutora jezika. Omogucava registraciju i 
 - MySQL 8
 - Drizzle ORM + Drizzle Kit
 - JWT autentikacija (cookie)
-- Tailwind CSS 4
+- Vitest
+- Docker / Docker Compose
 
 ## Glavne funkcionalnosti
 
-- Autentikacija: registracija, prijava, odjava
-- Uloge: `UCENIK`, `TUTOR`, `ADMIN`
-- Tutor katalog: pretraga/listanje tutora, detalj tutora
-- Termini i rezervacije: kreiranje termina, rezervisanje, otkazivanje i pracenje
-- Recenzije: kreiranje i moderacija recenzija
-- Favoriti: cuvanje omiljenih tutora
-- Verifikacije tutora: slanje zahteva i admin obrada
-- Bedzevi za ucenike
-- Admin paneli za korisnike i recenzije
+- registracija, prijava, odjava
+- uloge: `UCENIK`, `TUTOR`, `ADMIN`
+- tutor katalog, termini, rezervacije, recenzije, favoriti, verifikacije
+- admin panel za korisnike i recenzije
+- Swagger/OpenAPI dokumentacija
+- zastita API-ja (CSRF + security headers)
+- eksterni API-ji i vizualizacija podataka
 
-## Pokretanje projekta (lokalno)
+## Lokalno pokretanje (bez Docker app kontejnera)
 
 ### 1. Instalacija zavisnosti
 
@@ -32,25 +31,33 @@ Web aplikacija za povezivanje ucenika i tutora jezika. Omogucava registraciju i 
 npm install
 ```
 
-### 2. Pokretanje baze (Docker)
+Ako je PowerShell blokirao `npm`, koristi:
 
 ```bash
-docker compose up -d
+npm.cmd install
 ```
 
-### 3. Podesavanje promenljivih okruzenja
+### 2. Pokretanje baze
 
-Kreiraj `.env` (ako vec ne postoji) sa sledecim vrednostima:
+```bash
+docker compose up -d db
+```
+
+### 3. `.env` konfiguracija
 
 ```env
-DATABASE_URL="mysql://app:app@localhost:3306/tutor_app"
+DATABASE_URL="mysql://app:app@localhost:3307/tutor_app"
 JWT_SECRET="promeni_ovaj_jak_tajni_kljuc"
+RESEND_API_KEY=""
+RESEND_FROM_EMAIL=""
+GOOGLE_CALENDAR_ID=""
+GOOGLE_SERVICE_ACCOUNT_EMAIL=""
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=""
 ```
 
 ### 4. Migracije i seed
 
 ```bash
-npm run db:generate
 npm run db:push
 npm run db:seed
 ```
@@ -61,7 +68,100 @@ npm run db:seed
 npm run dev
 ```
 
-Aplikacija je dostupna na `http://localhost:3000`.
+App: `http://localhost:3000`
+
+## Full Docker pokretanje (db + app + init)
+
+```bash
+docker compose up -d --build
+```
+
+Servisi:
+
+- db: `localhost:3307`
+- app: `http://localhost:3001`
+- app-init: automatski radi `db:push` i `db:seed`
+
+Za gasenje:
+
+```bash
+docker compose down
+```
+
+Za gasenje + brisanje volumena:
+
+```bash
+docker compose down -v
+```
+
+## OpenAPI / Swagger
+
+- OpenAPI JSON: `GET /api/openapi`
+- Swagger stranica: `/swagger`
+- Direktan Swagger UI: `/swagger-ui.html`
+
+## Bezbednost
+
+Implementirano:
+
+- CSRF zastita za `POST/PUT/PATCH/DELETE` (provera `Origin/Referer`)
+- `Content-Security-Policy`
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- auth cookie `secure: true` u production
+- upload limit na verifikaciji (tip + max 5MB)
+
+## Eksterni API-ji i vizualizacija
+
+Korisceni eksterni API-ji:
+
+1. Resend API (email obavestenja za rezervacije)
+2. Google Calendar API (event za kreiranje/otkazivanje rezervacije)
+3. REST Countries (podaci o drzavi)
+4. Frankfurter Exchange API (kursna lista)
+
+Vizualizacija:
+
+- admin chart za jezike i statistiku tutora (`/me` admin dashboard)
+- analytics ruta: `GET /api/analytics/admin-language-stats`
+
+## Testovi
+
+```bash
+npm run test
+```
+
+## CI/CD (GitHub Actions)
+
+Workflow: `.github/workflows/ci-cd.yml`
+
+Na svaki push/PR:
+
+- `npm ci`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- Docker image build
+
+Na push na `main`/`develop`:
+
+- push Docker image na GHCR
+
+Na push na `main`:
+
+- automatski deploy preko Render deploy hook-a (ako je setovan secret)
+
+Potrebni GitHub Secrets:
+
+- `RENDER_DEPLOY_HOOK_URL`
+
+## Cloud deployment (Render)
+
+1. Napravi Render Web Service iz GitHub repoa (Docker).
+2. U Render-u setuj env promenljive iz `.env` (production vrednosti).
+3. U GitHub repo secrets dodaj `RENDER_DEPLOY_HOOK_URL`.
+4. Push na `main` automatski trigeruje deploy.
 
 ## Test nalozi (seed)
 
@@ -69,56 +169,3 @@ Aplikacija je dostupna na `http://localhost:3000`.
 - Ucenik: `ucenik@test.com` / `Ucenik123!`
 - Tutor 1: `mila.tutor@test.com` / `Tutor123!`
 - Tutor 2: `nikola.tutor@test.com` / `Tutor123!`
-
-## NPM skripte
-
-- `npm run dev` - pokretanje u development modu
-- `npm run build` - build za produkciju
-- `npm run start` - pokretanje produkcionog build-a
-- `npm run lint` - lint provera
-- `npm run db:generate` - generisanje Drizzle migracija
-- `npm run db:push` - push seme na bazu
-- `npm run db:migrate` - pokretanje migracija
-- `npm run db:seed` - unos test podataka
-
-## Kljucne stranice
-
-- `/login` - prijava
-- `/register` - registracija
-- `/me` - korisnicki profil/dashboard
-- `/tutors` - lista tutora
-- `/tutors/[id]` - detalj tutora
-- `/my-bookings` - moje rezervacije
-- `/my-reviews` - moje recenzije
-- `/favorites` - omiljeni tutori
-- `/verification`, `/verifications` - verifikacije
-- `/admin-users` - administracija korisnika
-- `/admin-reviews` - administracija recenzija
-
-## API pregled
-
-API rute su pod `src/app/api` i obuhvataju:
-
-- `auth` (`/api/auth/login`, `/api/auth/register`, `/api/auth/logout`)
-- `me` (`/api/me`, `/api/me/bedzevi`)
-- `tutors` (`/api/tutors`, `/api/tutors/[id]`)
-- `termini` (`/api/termini`, `/api/termini/[id]`)
-- `rezervacije` (`/api/rezervacije`, `/api/rezervacije/[id]`, `/api/rezervacije/ucenik`)
-- `recenzije` (`/api/recenzije`, `/api/recenzije/[id]`, `/api/recenzije/moderacija`)
-- `favoriti` (`/api/favoriti`)
-- `verifikacije` (`/api/verifikacije`, `/api/verifikacije/[id]`, `/api/verifikacije/istorija`, `/api/verifikacije/moj`, `/api/verifikacije/upload`)
-- `admin/users` (`/api/admin/users`, `/api/admin/users/[id]`)
-
-## Struktura projekta
-
-```text
-src/
-  app/            # Next.js stranice i API rute
-  components/     # UI komponente
-  db/             # Drizzle schema, migracije i seed
-  lib/            # auth i pomocne funkcije
-```
-
-## Napomena
-
-Projekat koristi JWT u cookie-ju (`auth_token`) za autentikaciju i proveru pristupa rutama.

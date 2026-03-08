@@ -1,50 +1,42 @@
-// app/api/auth/login/route.ts
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signToken, AUTH_COOKIE } from "@/lib/auth";
 import { getRoleForUser } from "@/lib/role";
+import { getAuthCookieOptions } from "@/lib/security";
 
 type Body = { email: string; lozinka: string };
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as Body; 
-  //ako telo requesta ne sadrži email ili lozinku, vraćamo grešku 400 (Bad Request) sa porukom da su email i lozinka obavezni
+  const body = (await req.json()) as Body;
   if (!body?.email || !body?.lozinka) {
     return NextResponse.json({ error: "Email i lozinka su obavezni." }, { status: 400 });
   }
-  //ako nema korisnika sa datim emailom, vraćamo grešku 401 (Unauthorized) 
+
   const user = await db.query.korisnik.findFirst({
     where: eq(schema.korisnik.email, body.email),
   });
   if (!user) {
-    return NextResponse.json({ error: "Pogrešan email ili lozinka." }, { status: 401 });
+    return NextResponse.json({ error: "Pogresan email ili lozinka." }, { status: 401 });
   }
-  //ako korisnik postoji, ali nije aktivan, vraćamo grešku 403 (Forbidden)
   if (user.statusNaloga !== "AKTIVAN") {
     return NextResponse.json({ error: "Nalog je blokiran." }, { status: 403 });
   }
+
   const ok = await bcrypt.compare(body.lozinka, user.lozinka);
   if (!ok) {
-    return NextResponse.json({ error: "Pogrešan email ili lozinka." }, { status: 401 });
+    return NextResponse.json({ error: "Pogresan email ili lozinka." }, { status: 401 });
   }
 
   const role = await getRoleForUser(user.korisnikId);
   const token = await signToken({ korisnikId: user.korisnikId, role });
- 
+
   const res = NextResponse.json(
     { korisnikId: user.korisnikId, role, email: user.email, ime: user.ime, prezime: user.prezime },
     { status: 200 }
   );
 
-  res.cookies.set(AUTH_COOKIE, token, {
-    httpOnly: true,  
-    sameSite: "lax",   
-    secure: false,   
-    path: "/",    
-    maxAge: 60 * 60 * 24 * 7,   
-  });
-
-  return res; // vraćamo odgovor sa postavljenim cookie-jem
+  res.cookies.set(AUTH_COOKIE, token, getAuthCookieOptions());
+  return res;
 }
