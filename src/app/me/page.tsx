@@ -135,7 +135,7 @@ export default function MePage() {
           const flat: Rezervacija[] = rez.flat();
           const activeReservations = flat.filter((r) => r.status === "AKTIVNA").length;
           const heldClasses = flat.filter((r) => r.status === "ODRZANA").length;
-          let avgRating = data?.tutor?.prosecnaOcena ?? "0.00";
+          const avgRating = data?.tutor?.prosecnaOcena ?? "0.00";
           setTutorStats({ activeReservations, heldClasses, avgRating });
         } catch {
           setTutorStats({ activeReservations: 0, heldClasses: 0, avgRating: "0.00" });
