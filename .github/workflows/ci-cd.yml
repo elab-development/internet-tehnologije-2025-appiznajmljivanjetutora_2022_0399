@@ -78,3 +78,18 @@ jobs:
           IMAGE="ghcr.io/${OWNER}/internet-tehnologije-2025-appiznajmljivanjetutora_2022_0399:${GITHUB_SHA}"
           docker tag tutor-booking-app:${GITHUB_SHA} "${IMAGE}"
           docker push "${IMAGE}"
+
+  deploy:
+    name: Deploy to Render (main only)
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Skip deploy (missing secret)
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
+        run: echo "RENDER_DEPLOY_HOOK_URL is not configured, skipping deployment."
