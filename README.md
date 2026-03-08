@@ -32,11 +32,16 @@ Web aplikacija za povezivanje ucenika i tutora jezika. Omogucava registraciju i 
 npm install
 ```
 
-### 2. Pokretanje baze (Docker)
+### 2. Pokretanje aplikacije i baze (Docker)
 
 ```bash
 docker compose up -d
 ```
+
+Servisi ce biti dostupni na:
+
+- aplikacija: `http://localhost:3000`
+- MySQL: `localhost:3307`
 
 ### 3. Podesavanje promenljivih okruzenja
 
@@ -44,6 +49,13 @@ Kreiraj `.env` (ako vec ne postoji) sa sledecim vrednostima:
 
 ```env
 DATABASE_URL="mysql://app:app@localhost:3306/tutor_app"
+JWT_SECRET="promeni_ovaj_jak_tajni_kljuc"
+```
+
+Ako koristis Docker Compose iz ovog repozitorijuma, host port za bazu je `3307`, pa primer izgleda ovako:
+
+```env
+DATABASE_URL="mysql://app:app@localhost:3307/tutor_app"
 JWT_SECRET="promeni_ovaj_jak_tajni_kljuc"
 ```
 
@@ -62,6 +74,11 @@ npm run dev
 ```
 
 Aplikacija je dostupna na `http://localhost:3000`.
+
+## Swagger / OpenAPI
+
+- JSON specifikacija: `/api/openapi`
+- Swagger UI: `/swagger`
 
 ## Test nalozi (seed)
 

@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.env
+.env.*
+npm-debug.log*
+coverage
+README.md
+STATUS_ZAHTEVA.md
+STATUS_NOVI_ZAHTEVI.md
+PLAN_REALIZACIJE.md
+NoviZahtevi.md
+studenti.md
