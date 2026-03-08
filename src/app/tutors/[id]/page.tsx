@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Button from "@/components/Button";
+import LanguageCountryFacts from "@/components/LanguageCountryFacts";
 
 type MeUser = { role: "UCENIK" | "TUTOR" | "ADMIN" };
 
@@ -310,6 +311,8 @@ export default function TutorDetailsPage() {
             </div>
           )}
         </div>
+
+        <LanguageCountryFacts languages={languages} />
 
         <div className="mt-8">
           <h2 className="text-sm font-semibold text-slate-900">Slobodni termini</h2>
