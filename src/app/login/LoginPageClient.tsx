@@ -31,7 +31,6 @@ export default function LoginPageClient() {
       const data = contentType.includes("application/json")
         ? await res.json()
         : { error: await res.text() };
-
       if (!res.ok) {
         setError(data?.error || "Nesto nije okej... pokusaj ponovo.");
         return;
