@@ -33,6 +33,9 @@ export function getCsrfCookieOptions() {
 }
 
 export function applySecurityHeaders(res: NextResponse) {
+  const devScriptSrc = isProduction() ? "" : " 'unsafe-eval'";
+  const connectSrc = isProduction() ? "connect-src 'self'" : "connect-src 'self' ws: wss:";
+
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -41,11 +44,11 @@ export function applySecurityHeaders(res: NextResponse) {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://unpkg.com",
+      `script-src 'self' 'unsafe-inline'${devScriptSrc} https://unpkg.com`,
       "style-src 'self' 'unsafe-inline' https://unpkg.com",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      connectSrc,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
