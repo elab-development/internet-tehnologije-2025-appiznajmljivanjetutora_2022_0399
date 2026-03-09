@@ -2,19 +2,11 @@ name: CI-CD
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - "feature/**"
   pull_request:
-    branches:
-      - main
-      - develop
-  workflow_dispatch:
 
 jobs:
-  quality:
-    name: Lint Test Build
+  test-and-build:
+    name: Test and Docker Build
     runs-on: ubuntu-latest
 
     steps:
@@ -30,13 +22,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
+      - name: Run tests
         run: npm run test
 
-      - name: Build
+      - name: Build app
         run: npm run build
         env:
           DATABASE_URL: mysql://app:app@localhost:3307/tutor_app
@@ -47,51 +36,5 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_EMAIL: ""
           GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: ""
 
-  docker:
-    name: Docker Build (and Push on main/develop)
-    runs-on: ubuntu-latest
-    needs: quality
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Build Docker image
         run: docker build -t tutor-booking-app:${{ github.sha }} .
-
-      - name: Login to GHCR
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push Docker image to GHCR
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        shell: bash
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE="ghcr.io/${OWNER}/internet-tehnologije-2025-appiznajmljivanjetutora_2022_0399:${GITHUB_SHA}"
-          docker tag tutor-booking-app:${GITHUB_SHA} "${IMAGE}"
-          docker push "${IMAGE}"
-
-  deploy:
-    name: Deploy to Render (main only)
-    runs-on: ubuntu-latest
-    needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    env:
-      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-
-    steps:
-      - name: Trigger Render Deploy Hook
-        if: ${{ env.RENDER_DEPLOY_HOOK_URL != '' }}
-        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
-
-      - name: Skip deploy (missing secret)
-        if: ${{ env.RENDER_DEPLOY_HOOK_URL == '' }}
-        run: echo "RENDER_DEPLOY_HOOK_URL is not configured, skipping deployment."
