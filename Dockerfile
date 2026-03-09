@@ -9,6 +9,16 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL=mysql://app:app@localhost:3306/tutor_app
+ENV JWT_SECRET=ci-secret
+ENV RESEND_API_KEY=
+ENV RESEND_FROM_EMAIL=
+ENV GOOGLE_CALENDAR_ID=
+ENV GOOGLE_SERVICE_ACCOUNT_EMAIL=
+ENV GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=
+
 RUN npm run build
 
 FROM node:20-alpine AS runner
